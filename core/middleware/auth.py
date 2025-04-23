@@ -1,0 +1,79 @@
+# app/core/middleware/auth.py
+from fastapi import Request, HTTPException, Depends
+from fastapi.security import HTTPBearer
+from fastapi.responses import JSONResponse
+from typing import List
+import logging
+from starlette.middleware.base import BaseHTTPMiddleware
+from starlette.types import ASGIApp
+
+from services.authentication_service import AuthService
+
+logger = logging.getLogger(__name__)
+
+security = HTTPBearer(auto_error=False)
+
+class AuthenticationMiddleware(BaseHTTPMiddleware):
+    def __init__(
+        self, 
+        app: ASGIApp, 
+        auth_service: AuthService,
+        exclude_paths: List[str] = None
+    ):
+        super().__init__(app)
+        self.auth_service = auth_service
+        self.exclude_paths = exclude_paths or ["/docs"]
+    
+    async def dispatch(self, request: Request, call_next):
+        try:
+            # Skip authentication for excluded paths
+            if any(request.url.path.startswith(path) for path in self.exclude_paths):
+                return await call_next(request)
+            
+            # Extract token from the request
+            auth_header = request.headers.get("Authorization")
+            if not auth_header:
+                return HTTPException(
+                    status_code=401,
+                    detail="Authorization header missing",
+                    headers={"WWW-Authenticate": "Bearer"}
+                )
+            
+            # Validate with auth service
+            try:
+                token = auth_header.replace("Bearer ", "")
+                is_valid, user_info = await self.auth_service.validate_token(token)
+                
+                if not is_valid:
+                    raise HTTPException(
+                        status_code=401,
+                        detail="Invalid or expired token",
+                        headers={"WWW-Authenticate": "Bearer"}
+                    )
+                
+                # Attach user info to request state for later use in route handlers
+                request.state.user = user_info
+                
+                # Continue processing the request
+                return await call_next(request)
+                
+            except HTTPException as e:
+                # Re-raise HTTP exceptions
+                raise
+            except Exception as e:
+                logger.error(f"Authentication error: {str(e)}")
+                raise HTTPException(
+                    status_code=500,
+                    detail="Authentication service error"
+                )
+        except HTTPException as e:
+            return JSONResponse(status_code=e.status_code, content= {"status": False, "message":e.detail})
+
+
+# Helper function to create and configure the middleware
+def get_auth_middleware(app: ASGIApp, auth_service: AuthService = Depends()):
+    return AuthenticationMiddleware(
+        app=app,
+        auth_service=auth_service,
+        exclude_paths=["/docs", "/redoc", "/openapi.json", "/health", "/metrics"]
+    )

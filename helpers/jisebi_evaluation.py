@@ -1,0 +1,447 @@
+import re
+import docx
+from io import BytesIO
+from typing import Literal, Dict, TypedDict, Union, List, Any
+import xml.etree.ElementTree as ET
+from docx.shared import RGBColor
+from docx.enum.text import WD_COLOR_INDEX
+from copy import deepcopy
+from helpers.jisebi_document import JISEBIDocument
+import asyncio
+
+class JISEBIEvaluation:
+
+    def __init__(self, document:JISEBIDocument):
+        self.jisebi_document:JISEBIDocument  = document  # Initialize the variable with the given value
+
+    async def generate_overall_summary(self):
+        
+        result1, result2, result3 = await asyncio.gather(
+            self.sections_exist(), 
+            self.sections_order(), 
+            self.check_document_font()
+        )
+        return self.merge_reports(self.merge_reports(result1, result2), result3)
+
+    def merge_reports(self, dict1:dict, dict2:dict):
+        """
+        Recursively merge two dictionaries, including nested dictionaries.
+        Values in dict2 will override dict1 if there are conflicts at the same level.
+        If both values are dictionaries, they will be merged recursively.
+        """
+        result = dict1.copy()
+        
+        for key, value in dict2.items():
+            if key in result and isinstance(result[key], dict) and isinstance(value, dict):
+                # If both are dictionaries, merge them recursively
+                result[key] = self.merge_reports(result[key], value)
+            else:
+                # Otherwise, just update the value
+                result[key] = value
+                
+        return result
+
+    async def sections_exist(self):
+
+        document = self.jisebi_document
+
+        result = {
+            "title": {"section_issue": {"not_found": []}},
+            "authors": {"section_issue": {"not_found": []}},
+            "abstract": {"section_issue": {"not_found": []}},
+            "introduction": {"section_issue": {"not_found": []}},
+            "method": {"section_issue": {"not_found": []}},
+            "result": {"section_issue": {"not_found": []}},
+            "discussion": {"section_issue": {"not_found": []}},
+            "conclusion":{"section_issue": {"not_found": []}},
+            "references": {"section_issue": {"not_found": []}},
+        }
+    
+        sections = ['title', 'authors', 'abstract', 'introduction', 'method', 'result', 'discussion', 'conclusion', 'references']
+        
+        for section in sections:
+            section_object = getattr(document, section)
+            if section not in ["authors", "abstract",]:
+                if section_object["index"] == -1:
+                    result[section]["section_issue"].append(f"The {section} cannot be found")
+            elif section == "authors":
+                if section_object["index"] == -1:
+                    result[section]["section_issue"].append(f"The {section} cannot be found")
+                if section_object["authors"]["index"] == -1:
+                    result[section]["section_issue"].append(f"The Author(s)'s name cannot be found")
+                if "affiliation" not in section_object["affiliations"]["data"]["1"]:
+                    result[section]["section_issue"].append(f"The Author(s)'s affiliation cannot be found")
+                if "email" not in section_object["affiliations"]["data"]["1"]:
+                    result[section]["section_issue"].append(f"The Author(s)'s email cannot be found")
+            elif section == "abstract":
+                if section_object["index"] == -1:
+                    result[section]["section_issue"].append(f"The {section} cannot be found")
+                abstract_sections = ["background", "objective", "methods", "results", "conclusion", "keywords", "article_history"]
+                for abstract_section in abstract_sections:
+                    if "heading" not in section_object["paragraph"][abstract_section]:
+                        result[section]["section_issue"].append(f"The Abstract's {abstract_section} cannot be found")
+
+        return result
+
+    async def sections_order(self):
+
+        document = self.jisebi_document
+
+        result = {
+            "title": {"section_issue": {"sequence": []}},
+            "authors": {"section_issue": {"sequence": []}},
+            "abstract": {"section_issue": {"sequence": []}},
+            "introduction": {"section_issue": {"sequence": []}},
+            "method": {"section_issue": {"sequence": []}},
+            "result": {"section_issue": {"sequence": []}},
+            "discussion": {"section_issue": {"sequence": []}},
+            "conclusion":{"section_issue": {"sequence": []}},
+            "references": {"section_issue": {"sequence": []}},
+        }
+
+        # Define the expected order of document sections
+        expected_order = ['title', 'authors', 'abstract', 'introduction', 'method', 'result', 'discussion', 'conclusion', 'references']
+        
+        if document.literature_review["index"] != -1:
+            result["literature_review"] = {"section_issue": {"sequence": []}}
+            expected_order.insert(4, "literature_review")
+
+        # Extract the start indices for each section
+        # For title, authors, abstract: use the single index value
+        # For other sections: use the 'first' value from the index dictionary
+        indices = {}
+        for section in expected_order:        
+            indices[section] = getattr(document, section)['index']['first']
+        
+        # Check if the indices are in ascending order
+        for i in range(len(expected_order) - 1):
+            current = expected_order[i]
+            next_section = expected_order[i + 1]
+            
+            # Skip if either section is missing
+            if current not in indices or next_section not in indices:
+                continue
+            
+            # Check if the current section index is greater than or equal to the next section index
+            if indices[current] >= indices[next_section]:
+                # Flag the out-of-order sections
+                if current in result:
+                    result[current]["section_issue"]["sequence"].append(f"Should come before {next_section}")
+                if next_section in result:
+                    result[next_section]["section_issue"]["sequence"].append(f"Should come after {current}")
+        
+        # Check for any sections with the same index
+        unique_indices = set()
+        duplicate_indices = set()
+        
+        for section, idx in indices.items():
+            if idx in unique_indices:
+                duplicate_indices.add(idx)
+            else:
+                unique_indices.add(idx)
+        
+        # Flag sections with duplicate indices
+        for section in expected_order:
+            if section in indices and indices[section] in duplicate_indices:
+                if 'flag' not in result[section]:
+                    result[section]["section_issue"]["sequence"].append(f"Has duplicate index {indices[section]}")
+                else:
+                    result[section]["section_issue"]["sequence"].append(f", has duplicate index {indices[section]}")
+        
+        # Check for inconsistencies in the range sections (first/last values)
+        for section in expected_order:
+            if section not in ['title', 'authors', 'abstract'] and section in dir(document):
+                first = getattr(document, section)['index']['first']
+                last = getattr(document, section)['index']['last']
+                
+                # Check if first page is after last page
+                if first > last:
+                    if 'flag' not in result[section]:
+                        result[section]["section_issue"]["sequence"].append(f"First page ({first}) is after last page ({last})")
+                    else:
+                        result[section]["section_issue"]["sequence"].append(f", first page ({first}) is after last page ({last})")
+        
+        result = {key: value for key, value in result.items() if value != ""}
+        return result
+
+    async def check_document_font(self):
+        contents = self.jisebi_document.contents
+        result = {
+            'title': {}, 
+            'authors': {}, 
+            'abstract': {}, 
+            'introduction': {"heading": {}, "body": {}}, 
+            'method': {"heading": {}, "body": {}}, 
+            'result': {"heading": {}, "body": {}}, 
+            'discussion': {"heading": {}, "body": {}}, 
+            'conclusion': {"heading": {}, "body": {}}, 
+            'references': {"heading": {}, "body": {}}, 
+        }
+        # Define the expected order of document sections
+    
+        sections = ['title', 'authors', 'abstract', 'introduction', 'method', 'result', 'discussion', 'conclusion', 'references']
+    
+        if self.jisebi_document.literature_review["index"] != -1:
+            result["literature_review"] = {"heading": {}, "body": {}}
+            sections.insert(4, "literature_review")
+        
+
+        for i, section in enumerate(sections):
+            section_report = []
+            section_object = getattr(self.jisebi_document, section)
+            
+            if section == "title":
+                result["title"] = (self.check_paragraph_font(section_object["object"], "Times New Roman", 18, True, None, "JISEBI Title"))
+           
+            elif section == "authors":
+
+                result["authors"] = {
+                    "authors": {},
+                    "affiliations": {},
+                    "emails": {}
+                }
+                
+                # Checking the Authors
+                result["authors"]["authors"] = (self.check_paragraph_font(section_object["authors"]["object"], "Times New Roman", 11, True, None, style="JISEBI Author Name"))
+                
+                # Checking the Affiliations of the Authors
+                for key, value in section_object["affiliations"]["data"].items():
+                    result["authors"]["affiliations"][key] = (self.check_paragraph_font(value["affiliation"]["object"], "Times New Roman", 9, False, True, style="JISEBI Author Affiliation"))
+                    result["authors"]["emails"][key] = (self.check_paragraph_font(value["email"]["object"], "Times New Roman", 8, False, False, style="JISEBI Author Email"))
+            
+            elif section == "abstract":
+                abstract_sections = ["background", "objective", "methods", "results", "conclusion", "keywords", "article_history"]
+                result["abstract"] = {
+                    "header": {},
+                    "background": {}, 
+                    "objective": {}, 
+                    "methods": {}, 
+                    "results": {}, 
+                    "conclusion": {}, 
+                    "keywords": {}, 
+                    "article_history": {}
+                }
+                if section_object["is_table"] == True:
+                    abstract_objects = section_object["object"].cell(0, 0).paragraphs
+                else:
+                    abstract_objects = section_object["object"]
+
+                # Checking the 'Abstract' Header
+                result["abstract"]["header"] = (self.check_paragraph_font(section_object["heading"]["object"], "Times New Roman", 9, True, True, style="JISEBI Abstract title"))
+
+                # Check the ["background", "objective", "methods", "results", "conclusion"]
+                for abstract_section in abstract_sections:
+                    if abstract_section == "keywords":
+                        #Checking the 'abstract_section' line styling
+                        result["abstract"][abstract_section]["body"] = (self.check_paragraph_font(abstract_objects[section_object["paragraph"][abstract_section]["paragraph_index"]], "Times New Roman", 8, False, False, style="JISEBI Abstract keywords"))
+                        # Checking the 'abstract_section' Prefix
+                        result["abstract"][abstract_section]["prefix"] = (self.check_paragraph_font(abstract_objects[section_object["paragraph"][abstract_section]["paragraph_index"]].runs[section_object["paragraph"][abstract_section]["heading"]["run_index"]["first"]], "Times New Roman", 8, True, True))
+                    elif abstract_section == "article_history":
+                        #Checking the 'abstract_section' line styling
+                        result["abstract"][abstract_section]["body"] = (self.check_paragraph_font(abstract_objects[section_object["paragraph"][abstract_section]["paragraph_index"]], "Times New Roman", 8, False, False, style="Normal"))
+                        # Checking the 'abstract_section' Prefix
+                        result["abstract"][abstract_section]["prefix"] = (self.check_paragraph_font(abstract_objects[section_object["paragraph"][abstract_section]["paragraph_index"]].runs[section_object["paragraph"][abstract_section]["heading"]["run_index"]["first"]], "Times New Roman", 8, True, True))
+                    else:
+                        #Checking the 'abstract_section' line styling
+                        result["abstract"][abstract_section]["body"] = (self.check_paragraph_font(abstract_objects[section_object["paragraph"][abstract_section]["paragraph_index"]], "Times New Roman", 9, False, None, style="JISEBI Abstract text"))
+                        # Checking the 'abstract_section' Prefix
+                        result["abstract"][abstract_section]["prefix"] = (self.check_paragraph_font(abstract_objects[section_object["paragraph"][abstract_section]["paragraph_index"]].runs[section_object["paragraph"][abstract_section]["heading"]["run_index"]["first"]], "Times New Roman", 9, True, False))
+            elif section == "references":
+                result[section]["heading"] = {}
+                result[section]["body"] = {}
+                # continue
+                result[section]["heading"] = (self.check_paragraph_font(section_object["heading"]["object"], "Times New Roman", 10, False, False, style="JISEBI Reference heading"))
+                result[section]["body"] = (self.check_paragraph_font(section_object["paragraph"]["object"], "Times New Roman", 10, None, None, style="references"))
+            else:
+                # continue
+                (result[section])["heading"] = self.check_paragraph_font(section_object["heading"]["object"], "Times New Roman", 10, False, False, style="JISEBI Heading 1")
+                result[section]["body"] = self.check_paragraph_font(section_object["paragraph"]["object"], "Times New Roman", 10, None, None)
+        
+        return result
+
+    def check_paragraph_font(self, paragraphs: Union[List, Any], 
+                          font_name: str = None, 
+                          font_size: int = None, 
+                          bold: bool = None, 
+                          italic: bool = None,
+                          style: str = None) -> Dict:
+        """
+        Check if paragraphs meet specified font criteria.
+        
+        Args:
+            paragraphs: A single paragraph object or a list of paragraph objects
+            font_name: The expected font name
+            font_size: The expected font size
+            bold: Whether the text should be bold
+            italic: Whether the text should be italic
+            
+        Returns:
+            A dictionary containing information about paragraphs that don't meet criteria
+        """
+        # Convert single paragraph to list for consistent processing
+
+        if not isinstance(paragraphs, list):
+            paragraphs = [paragraphs]
+                
+        results = {}
+
+        if type(paragraphs[0]) == docx.text.run.Run:
+            results = (self.check_run_font(paragraphs, font_name, font_size, bold, italic, style))
+            return results
+            
+        else:
+            for i, para in enumerate(paragraphs):
+                issues = []
+                paragraph_issues = {}
+
+                paragraph_style = para.style.name
+
+                # Check style if specified
+                if style is not None:
+                    if para.style.name is None:  # None means it's using the default setting
+                        paragraph_issues["style"] = (f"Style is using document default (possibly 'Normal')")
+                    elif para.style.name != style:
+                        paragraph_issues["style"] = (f"Style is {para.style.name} instead of {style}")
+
+                #Check if content is a Table
+                if type(para) == docx.table.Table:
+                    continue
+                
+                # Check each run in the paragraph
+                run_issues = self.check_run_font(para.runs, font_name, font_size, bold, italic, style, paragraph_style=paragraph_style)
+                if run_issues and run_issues != {"message": "No issues in this part"}:
+                    issues.append(run_issues)
+
+                # If there are issues with this paragraph, add to results
+                if (issues or paragraph_issues):
+                    results[f"{i}"] = {
+                        "run_issues": issues,
+                        "paragraph_issues": paragraph_issues
+                    }
+            if results == {}:
+                pass
+
+            return results
+
+    def check_run_font(self, runs: Union[List, Any], 
+                    font_name: str = None, 
+                    font_size: int = None, 
+                    bold: bool = None, 
+                    italic: bool = None,
+                    style: str = None,
+                    paragraph_style: str = None) -> Dict:
+        """
+        Check if paragraphs meet specified font criteria.
+        
+        Args:
+            paragraphs: A single paragraph object or a list of paragraph objects
+            font_name: The expected font name
+            font_size: The expected font size
+            bold: Whether the text should be bold
+            italic: Whether the text should be italic
+            
+        Returns:
+            A dictionary containing information about paragraphs that don't meet criteria
+        """
+        # Convert single paragraph to list for consistent processing
+        if not isinstance(runs, list):
+            runs = [runs]
+
+        if not runs:
+            return
+
+        default_font_name = "Times New Roman"
+        default_font_size = 10
+        default_font_bold = False
+        default_font_italic = False
+
+        # Resolve default font properties
+        if paragraph_style == "Normal":
+            default_font_name = self.jisebi_document.default_font["name"]
+            default_font_size = self.jisebi_document.default_font["size"] if self.jisebi_document.default_font["size"] != None else 10
+            default_font_bold = False
+            default_font_italic = False
+        
+        if paragraph_style != None and paragraph_style != 'None':
+            default_font_name = self.jisebi_document.raw_document.styles[paragraph_style].font.name
+            default_font_size = self.jisebi_document.raw_document.styles[paragraph_style].font.size.pt if self.jisebi_document.raw_document.styles[paragraph_style].font.size != None else None
+            default_font_bold = self.jisebi_document.raw_document.styles[paragraph_style].font.bold
+            default_font_italic = self.jisebi_document.raw_document.styles[paragraph_style].font.italic
+        
+        if default_font_name == None:
+            default_font_name = self.jisebi_document.default_font["name"]
+        
+        if default_font_size == None:
+            default_font_size = self.jisebi_document.default_font["size"] if self.jisebi_document.default_font["size"] != None else 10
+        
+        if default_font_bold == None:
+            default_font_bold = False
+
+        if default_font_italic == None:
+            default_font_italic = False
+
+
+        # If default font couldn't be extracted, use Times New Roman as fallback
+        if default_font_name is None:
+            default_font_name = "Times New Roman"
+        
+        results = {}
+            
+            # Check each run in the paragraph
+        for run_idx, run in enumerate(runs):
+            run_issues = {}
+
+            if re.match(r'\s*', run.text):
+                continue
+            
+            # Check font name if specified
+            if font_name is not None:
+                actual_font = run.font.name
+                
+                # If the font is None (meaning it's the default font)
+                if actual_font is None:
+                    actual_font = default_font_name
+                
+                if actual_font != font_name:
+                    run_issues["font_name"] = f"Font name is '{actual_font}' instead of '{font_name}'"
+            
+            # Check font size if specified
+            if font_size is not None:
+                # Convert pt to half-points (which is what python-docx uses)
+                expected_size = font_size * 2
+                if run.font.size is None:
+                    actual_font_size = default_font_size
+                    if actual_font_size*2 != expected_size:
+                        run_issues["font_size"] = f"Font size is {actual_font_size}pt instead of {font_size}pt"
+                elif run.font.size.pt * 2 != expected_size:
+                    run_issues["font_size"] = f"Font size is {run.font.size.pt}pt instead of {font_size}pt"
+            
+            # Check bold if specified
+            if bold is not None:
+                if run.bold is None:  # None means it's using the default setting
+                    actual_font_bold = default_font_bold
+                    if actual_font_bold != bold:
+                        run_issues["bold"] = (f"Bold is {actual_font_bold} instead of {bold} with {paragraph_style}")
+                elif run.bold != bold:
+                    run_issues["bold"] = (f"Bold is {run.bold} instead of {bold}")
+            
+            # Check italic if specified
+            if italic is not None:
+                if run.italic is None:  # None means it's using the default setting
+                    actual_font_italic = default_font_italic
+                    if actual_font_italic != italic:
+                        run_issues["italic"] = (f"Italic is {actual_font_italic} instead of {italic}")
+                elif run.italic != italic:
+                    run_issues["italic"] = (f"Italic is {run.italic} instead of {italic}")
+            
+            # If there are issues with this run, add to the list
+            if run_issues:
+                return {
+                    "run_index": run_idx,
+                    "text": run.text,
+                    "issues": run_issues
+                }
+
+        return {}
+
+

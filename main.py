@@ -1,10 +1,12 @@
-from fastapi import FastAPI, HTTPException, Depends
-from fastapi.responses import JSONResponse
+from fastapi import FastAPI
+from fastapi.responses import HTMLResponse
 from routers import upload
 from services.authentication_service import AuthService
 from core.config import get_settings
 from services.authentication_service import AuthService
 from core.middleware.auth import AuthenticationMiddleware
+
+from helpers.jisebi_reporting import rendur
 
 
 app = FastAPI(title="JISEBI Document Processing API", description="Upload document and get your evaluation")
@@ -17,12 +19,12 @@ auth_service = AuthService(settings)
 app.add_middleware(
     AuthenticationMiddleware,
     auth_service=auth_service,
-    exclude_paths=["/docs", "/redoc", "/openapi.json", "/health", "/metrics"]
+    exclude_paths=["/docs", "/redoc", "/openapi.json", "/health", "/metrics", "/redocc"]
 )
 
 # Register Routers
 app.include_router(upload.router, prefix="/api", tags=["Search"])
 
-@app.get("/")
+@app.get("/redocc")
 async def root():
-    return {"message": "Welcome to the Journal Search API"}
+    return HTMLResponse(await rendur())

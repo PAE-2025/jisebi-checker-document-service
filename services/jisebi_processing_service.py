@@ -5,9 +5,12 @@ from helpers.jisebi_reporting import JISEBIReporting
 
 class JISEBIProcessingService:
     
-    def process_document(self, bytes:IO[bytes]) -> JISEBIReporting:
+    async def process_document(self, bytes:IO[bytes]) -> JISEBIReporting:
         # Process the document using the service
         document = JISEBIDocument(bytes)
         evaluation = JISEBIEvaluation(document)
         report = JISEBIReporting(evaluation)
-        return report
+        # await report.save_dashboard_to_file()
+        return await report.generate_final_report()
+        # await report.generate_report()
+        # return evaluation.generate_overall_summary()

@@ -1,4 +1,5 @@
 from fastapi import APIRouter, File, UploadFile, Depends, HTTPException
+from fastapi.responses import StreamingResponse
 from services.jisebi_processing_service import JISEBIProcessingService
 import io
 
@@ -17,13 +18,14 @@ async def complex_operation_endpoint(file: UploadFile = File(...), service: JISE
     bytes_io = io.BytesIO(contents)
     
     try:
-        
-        reporting = service.process_document(bytes_io)
+        reporting = await service.process_document(bytes_io)
+        # report = await reporting.generate_report()
 
-        return {
-            "filename": file.filename,
-            "results": await reporting.jisebi_evaluation
-        }
+        return StreamingResponse(
+            reporting,
+            media_type="application/pdf",
+            headers={"Content-Disposition": "attachment; filename=reporting-result.pdf"}
+        )
     
     except Exception as e:
         raise HTTPException(status_code=500, detail=f"Error processing document: {str(e)}")

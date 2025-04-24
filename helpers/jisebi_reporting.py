@@ -1,19 +1,27 @@
-import re
-import docx
 from io import BytesIO
-from typing import Literal, Dict, TypedDict, Union
+from typing import IO, Dict
 import xml.etree.ElementTree as ET
 from docx.shared import RGBColor
 from docx.enum.text import WD_COLOR_INDEX
-from copy import deepcopy
 from helpers.jisebi_evaluation import JISEBIEvaluation
 from helpers.jisebi_document import JISEBIDocument
+from files.reporting_template import template_str
+from jinja2 import Template
+from typing import Dict
+from datetime import datetime
+import pdfkit
+from PyPDF2 import PdfMerger
+import comtypes.client
+import random
+import string
+import os
 
 class JISEBIReporting:
 
     def __init__(self, evaluation:JISEBIEvaluation):
         self.jisebi_document:JISEBIDocument  = evaluation.jisebi_document  # Initialize the variable with the given value
-        self.jisebi_evaluation:JISEBIEvaluation = evaluation.generate_overall_summary()
+        self.jisebi_evaluation: JISEBIEvaluation = evaluation
+        self.jisebi_report: Dict = None
 
     def add_highlight(self, content_index, start_index, end_index, highlight_color=WD_COLOR_INDEX.YELLOW):
         """
@@ -30,7 +38,7 @@ class JISEBIReporting:
             True if successful, False otherwise
         """
         doc = self.jisebi_document.raw_document
-        contents = self.contents
+        contents = self.jisebi_document.contents
     # try:
         # Get the target paragraph
         if content_index >= len(contents):
@@ -89,10 +97,6 @@ class JISEBIReporting:
         self.remove_paragraph(doc.paragraphs[-1])
         
         return True
-        
-    # except Exception as e:
-    #     print(f"Error while highlighting: {str(e)}")
-    #     return False
 
     def copy_run_formatting(self, source_paragraph, target_run):
         """Copy formatting from the first run of source paragraph to target run."""
@@ -164,5 +168,420 @@ class JISEBIReporting:
             print(f"Error in highlight_word: {str(e)}")
             return False
 
-    def export_document(self, path:str):
+    def export_document(self, path:str | IO[BytesIO]):
         self.jisebi_document.raw_document.save(path)
+
+    async def set_report(self): 
+        self.jisebi_report = await self.jisebi_evaluation.generate_overall_summary()
+
+    async def generate_report(self, path: str | bool) -> IO[BytesIO]:
+
+        document = self.jisebi_document
+
+        if self.jisebi_report == None:
+            await self.set_report()
+        
+        report = self.jisebi_report
+
+        for key, data in report.items():
+            # paragraph = document.introduction["object"][key]
+            
+            # if data.section_issue.not_found != []:
+            if data['section_issue']['sequence'] != []:
+                obj_index = getattr(document, key)["index"]["first"]
+                paragraph_start = 0
+                paragraph_end = len(getattr(document, key)["heading"]["content"])
+                self.add_highlight(obj_index, paragraph_start, paragraph_end, WD_COLOR_INDEX.RED)
+
+        if (path == False):
+            file_stream = BytesIO()
+            self.export_document(file_stream)
+            file_stream.seek(0)
+            return file_stream
+        else:
+            self.export_document(path)
+            return "exported"
+
+    
+            # if data.heading != {}:
+
+            # if data.sequence != {}:
+
+        #     processed_runs = set()
+
+        #     for issue_data in data['issues']:
+        #         run_index = issue_data.get('run_index')
+        #         if run_index is None or run_index in processed_runs:
+        #             continue
+                    
+        #         # Make sure run_index is valid
+        #         if run_index >= len(paragraph.runs):
+        #             print(f"Run index {run_index} is out of range for paragraph {para_index}")
+        #             continue
+                    
+        #         # Add highlight to the run
+        #         run = paragraph.runs[run_index]
+        #         run.font.highlight_color = WD_COLOR_INDEX.YELLOW
+                
+        #         highlighted_count += 1
+        #         processed_runs.add(run_index)
+
+        # for key, data in structural_report.items():
+        #     obj_index = getattr(newDoc, key)["index"]["first"]
+        #     paragraph_start = 0
+        #     paragraph_end = len(getattr(newDoc, key)["heading"]["content"])
+        #     newDoc.add_highlight(obj_index, paragraph_start, paragraph_end, WD_COLOR_INDEX.RED)
+
+    async def generate_dashboard_html(self) -> str:
+        """
+        Generate an A4-sized HTML dashboard from the supplied JSON report data.
+        
+        Args:
+            report_data: Dictionary containing paper structure and issues
+            
+        Returns:
+            String containing HTML for the dashboard
+        """
+        
+        # Extract and prepare the data
+
+        if self.jisebi_report == None:
+            await self.set_report()
+
+        report_data = self.jisebi_report
+
+        sections_with_issues = []
+        total_issues = 0
+        
+        for section_name, section_data in report_data.items():
+            section_issues = {
+                "name": section_name.replace("_", " ").title(),
+                "not_found": [],
+                "sequence": [],
+                "body_issues": 0,
+                "style_issues": 0
+            }
+            
+            # Check section level issues
+            if "section_issue" in section_data:
+                if "not_found" in section_data["section_issue"] and section_data["section_issue"]["not_found"]:
+                    section_issues["not_found"] = section_data["section_issue"]["not_found"]
+                    total_issues += len(section_data["section_issue"]["not_found"])
+                
+                if "sequence" in section_data["section_issue"] and section_data["section_issue"]["sequence"]:
+                    section_issues["sequence"] = section_data["section_issue"]["sequence"]
+                    total_issues += len(section_data["section_issue"]["sequence"])
+            
+            # Check body issues (especially in references)
+            if "body" in section_data and isinstance(section_data["body"], dict):
+                style_issues = 0
+                
+                for paragraph_id, paragraph_data in section_data["body"].items():
+                    if "paragraph_issues" in paragraph_data:
+                        if "style" in paragraph_data["paragraph_issues"]:
+                            style_issues += 1
+                            total_issues += 1
+                
+                if style_issues > 0:
+                    section_issues["style_issues"] = style_issues
+            
+            # Only include sections that have issues
+            if section_issues["not_found"] or section_issues["sequence"] or section_issues["style_issues"]:
+                sections_with_issues.append(section_issues)
+        
+        # Calculate section order issues
+        section_order_issues = []
+        for section_data in sections_with_issues:
+            for seq_issue in section_data["sequence"]:
+                section_order_issues.append(f"{section_data['name']}: {seq_issue}")
+        
+        # Get overall summary
+        sections_with_sequence_issues = sum(1 for section in sections_with_issues if section["sequence"])
+        sections_with_not_found_issues = sum(1 for section in sections_with_issues if section["not_found"])
+        sections_with_style_issues = sum(1 for section in sections_with_issues if section["style_issues"] > 0)
+
+        # Create a Template object
+        template = Template(template_str)
+        
+        # Replace the now tag with actual datetime for demonstration
+        current_time = datetime.now().strftime('%Y-%m-%d %H:%M:%S')
+        
+        # Render the template with the data
+        html = template.render(
+            data = report_data,
+            title = self.jisebi_document.title["content"],
+            current_time=current_time,
+            total_issues=total_issues,
+            sections_with_issues=sections_with_issues,
+            sections_with_sequence_issues=sections_with_sequence_issues,
+            sections_with_not_found_issues=sections_with_not_found_issues,
+            sections_with_style_issues=sections_with_style_issues,
+            section_order_issues=section_order_issues
+        )
+        
+        return html
+
+    async def save_dashboard_to_file(self, output_file: str = "files/paper_review_dashboard.html") -> None:
+        """
+        Generate the dashboard HTML and save it to a file
+        
+        Args:
+            report_data: Dictionary containing paper structure and issues
+            output_file: Path to save the HTML file
+        """
+        html = await self.generate_dashboard_html()
+        
+        with open(output_file, "w", encoding="utf-8") as f:
+            f.write(html)
+        
+        print(f"Dashboard saved to {output_file}")
+
+    async def generate_final_report(self):
+        try:
+            randomname = ''.join(random.choices(string.ascii_letters, k=15))
+            current_dir = os.getcwd()
+
+
+            # Convert HTML to PDF
+            pdfkit.from_string(await self.generate_dashboard_html(), output_path=f'{current_dir}/files/export/{randomname}-summary.pdf',configuration=pdfkit.configuration(wkhtmltopdf="D:/Software/wkhtmltopdf/bin/wkhtmltopdf.exe"))
+
+            await self.generate_report(f'{current_dir}/files/export/{randomname}-report.docx')
+    
+            # Convert DOCX to PDF
+            word = comtypes.client.CreateObject('Word.Application')
+            word.Visible = False
+            print('tes')
+            doc = word.Documents.Open(f'{current_dir}/files/export/{randomname}-report.docx')
+            doc.SaveAs(f'{current_dir}/files/export/{randomname}-report.pdf', FileFormat=17) # 17 is PDF format
+            doc.Close()
+            word.Quit()
+
+            # Merge the PDFs
+            merger = PdfMerger()
+            merger.append(f'{current_dir}/files/export/{randomname}-summary.pdf')
+            merger.append(f'{current_dir}/files/export/{randomname}-report.pdf')
+            merger.write(f'{current_dir}/files/export/{randomname}-merged.pdf')
+            merger.close()
+
+            # Open the PDF file in binary mode
+            with open(f'{current_dir}/files/export/{randomname}-merged.pdf', "rb") as pdf_file:
+                # Read the PDF content
+                pdf_content = pdf_file.read()
+                
+                print("test")
+                # Create a BytesIO stream from the content
+                pdf_stream = BytesIO(pdf_content)
+                pdf_stream.seek(0)  # Reset the stream pointer to the beginning
+                
+            files = ["report.pdf", "report.docx", "summary.pdf", "merged.pdf"]
+            for type in files:
+                try:
+                    if os.path.exists(f'{current_dir}/files/export/{randomname}-{type}'):
+                        os.remove(f'{current_dir}/files/export/{randomname}-{type}')
+                        print(f"{f'files/export/{randomname}-merged.pdf'} has been deleted.")
+                except Exception as e:
+                    print(e)
+
+            return pdf_stream
+        
+        except Exception as e:
+            files = ["report.pdf", "report.docx", "summary.pdf", "merged.pdf"]
+            for type in files:
+                try:
+                    if os.path.exists(f'{current_dir}/files/export/{randomname}-{type}'):
+                        os.remove(f'{current_dir}/files/export/{randomname}-{type}')
+                        print(f"{f'files/export/{randomname}-merged.pdf'} has been deleted.")
+                except Exception as e:
+                    print(e)
+            raise e
+
+# TO BE REMOVED - FOR TESTING PURPOSES
+async def rendur():
+    """
+    Generate an A4-sized HTML dashboard from the supplied JSON report data.
+    
+    Args:
+        report_data: Dictionary containing paper structure and issues
+        
+    Returns:
+        String containing HTML for the dashboard
+    """
+    
+    # Extract and prepare the data
+
+    
+
+    # Create a Template object
+    template = Template(template_str)
+    
+    # Replace the now tag with actual datetime for demonstration
+    current_time = datetime.now().strftime('%Y-%m-%d %H:%M:%S')
+    
+    # Render the template with the data
+    html = template.render(
+        title="Paper Title",
+        current_time="2025-04-23 22:42:27",
+        total_issues=8,
+        sections_with_sequence_issues=2,
+        sections_with_not_found_issues=0,
+        sections_with_style_issues=1,
+        data = {
+            "title": {
+                "section_issue": {
+                    "not_found": [],
+                    "sequence": []
+                }
+            },
+            "authors": {
+                "section_issue": {
+                    "not_found": [],
+                    "sequence": []
+                },
+                "authors": {},
+                "affiliations": {
+                    "1": {},
+                    "2": {}
+                },
+                "emails": {
+                    "1": {},
+                    "2": {}
+                }
+            },
+            "abstract": {
+                "section_issue": {
+                    "not_found": [],
+                    "sequence": []
+                },
+                "header": {},
+                "background": {
+                    "body": {},
+                    "prefix": {}
+                },
+                "objective": {
+                    "body": {},
+                    "prefix": {}
+                },
+                "methods": {
+                    "body": {},
+                    "prefix": {}
+                },
+                "results": {
+                    "body": {},
+                    "prefix": {}
+                },
+                "conclusion": {
+                    "body": {},
+                    "prefix": {}
+                },
+                "keywords": {
+                    "body": {},
+                    "prefix": {}
+                },
+                "article_history": {
+                    "body": {},
+                    "prefix": {}
+                }
+            },
+            "introduction": {
+                "section_issue": {
+                    "not_found": [],
+                    "sequence": [
+                        "Should come before literature_review"
+                    ]
+                },
+                "heading": {},
+                "body": {}
+            },
+            "method": {
+                "section_issue": {
+                    "not_found": [],
+                    "sequence": []
+                },
+                "heading": {},
+                "body": {}
+            },
+            "result": {
+                "section_issue": {
+                    "not_found": [],
+                    "sequence": []
+                },
+                "heading": {},
+                "body": {}
+            },
+            "discussion": {
+                "section_issue": {
+                    "not_found": [],
+                    "sequence": []
+                },
+                "heading": {},
+                "body": {}
+            },
+            "conclusion": {
+                "section_issue": {
+                    "not_found": [],
+                    "sequence": []
+                },
+                "heading": {},
+                "body": {}
+            },
+            "references": {
+                "section_issue": {
+                    "not_found": [],
+                    "sequence": []
+                },
+                "heading": {},
+                "body": {
+                    "0": {
+                        "run_issues": [],
+                        "paragraph_issues": {
+                            "style": "Style is Normal instead of references"
+                        }
+                    },
+                    "1": {
+                        "run_issues": [],
+                        "paragraph_issues": {
+                            "style": "Style is Normal instead of references"
+                        }
+                    },
+                    "2": {
+                        "run_issues": [],
+                        "paragraph_issues": {
+                            "style": "Style is Normal instead of references"
+                        }
+                    },
+                    "9": {
+                        "run_issues": [],
+                        "paragraph_issues": {
+                            "style": "Style is Normal instead of references"
+                        }
+                    },
+                    "10": {
+                        "run_issues": [],
+                        "paragraph_issues": {
+                            "style": "Style is Normal instead of references"
+                        }
+                    },
+                    "11": {
+                        "run_issues": [],
+                        "paragraph_issues": {
+                            "style": "Style is Normal instead of references"
+                        }
+                    }
+                }
+            },
+            "literature_review": {
+                "section_issue": {
+                    "sequence": [
+                        "Should come after introduction"
+                    ]
+                },
+                "heading": {},
+                "body": {}
+            }
+        }
+    )
+
+    # paper title, current time, section with issues, sequence issues, styling issues, missing sections, 
+
+    
+    return html

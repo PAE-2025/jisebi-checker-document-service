@@ -91,10 +91,30 @@ class JISEBIReporting:
         # p_index = doc.paragraphs.index(paragraph)
         p_element = paragraph._element
         new_p_element = new_paragraph._element
-        p_element.getparent().replace(p_element, new_p_element)
         
-        # Remove the extra paragraph we created
-        self.remove_paragraph(doc.paragraphs[-1])
+        parent = p_element.getparent()
+
+        if parent is None:
+            print("p_element has no parent. Attempting to locate or reattach...")
+
+            # Find the parent manually within the document tree
+            root = p_element.getroottree()
+            parent = root.getroot()
+
+            if parent is not None:
+                print("Reattached p_element to the tree.")
+                parent.append(p_element)  # Temporarily reattach it
+            else:
+                print("Could not find a suitable parent. Aborting operation.")
+                return
+
+        if parent is not None:
+            parent.replace(p_element, new_p_element)
+            # Remove the extra paragraph we created
+            self.remove_paragraph(doc.paragraphs[-1])
+
+        else:
+            print("Could not find or reattach the parent. Skipping replacement.")
         
         return True
 
@@ -186,12 +206,41 @@ class JISEBIReporting:
         for key, data in report.items():
             # paragraph = document.introduction["object"][key]
             
-            # if data.section_issue.not_found != []:
             if data['section_issue']['sequence'] != []:
                 obj_index = getattr(document, key)["index"]["first"]
                 paragraph_start = 0
                 paragraph_end = len(getattr(document, key)["heading"]["content"])
-                self.add_highlight(obj_index, paragraph_start, paragraph_end, WD_COLOR_INDEX.RED)
+                self.add_highlight(obj_index, paragraph_start, paragraph_end, WD_COLOR_INDEX.YELLOW)
+            if key in ['introduction', 'method', 'result', 'discussion', 'conclusion', 'references', 'literature_review'] and (data['heading'] != {} or data["body"] != {}):
+                if data["body"] != {}:
+                    for paragraph_index, issue in data["body"].items():
+                        obj_index = getattr(document, key)["paragraph"]["index"]["first"] + int(paragraph_index)
+                        if issue["paragraph_issues"] != {}:
+                            paragraph_start = 0
+                            paragraph_end = len(self.jisebi_document.contents[obj_index].text)
+                            self.add_highlight(obj_index, paragraph_start, paragraph_end, WD_COLOR_INDEX.RED)
+
+                        if issue["run_issues"] != []:
+
+
+                            # print(getattr(document, key)["object"])
+                            # for pra in getattr(document, key)["object"]:
+                            #     print (pra.text)
+
+                            paragraph = self.jisebi_document.contents[obj_index]
+                            
+                            # paragraph = self..introduction["object"][key]
+                            for run_issue in issue["run_issues"]:
+                                run_index = run_issue["run_index"]
+                                run = paragraph.runs[run_index]
+                                run.font.highlight_color = WD_COLOR_INDEX.RED
+
+
+
+                # obj_index = getattr(document, key)["index"]["first"]
+                # paragraph_start = 0
+                # paragraph_end = len(getattr(document, key)["heading"]["content"])
+                # self.add_highlight(obj_index, paragraph_start, paragraph_end, WD_COLOR_INDEX.RED)
 
         if (path == False):
             file_stream = BytesIO()
@@ -316,7 +365,6 @@ class JISEBIReporting:
             sections_with_sequence_issues=sections_with_sequence_issues,
             sections_with_not_found_issues=sections_with_not_found_issues,
             sections_with_style_issues=sections_with_style_issues,
-            section_order_issues=section_order_issues
         )
         
         return html
@@ -341,12 +389,18 @@ class JISEBIReporting:
             randomname = ''.join(random.choices(string.ascii_letters, k=15))
             current_dir = os.getcwd()
 
+            print("here1")
 
             # Convert HTML to PDF
-            pdfkit.from_string(await self.generate_dashboard_html(), output_path=f'{current_dir}/files/export/{randomname}-summary.pdf',configuration=pdfkit.configuration(wkhtmltopdf="D:/Software/wkhtmltopdf/bin/wkhtmltopdf.exe"))
-
+            options = {
+                'page-size': 'Letter'
+            }
+            pdfkit.from_string(await self.generate_dashboard_html(), output_path=f'{current_dir}/files/export/{randomname}-summary.pdf',configuration=pdfkit.configuration(wkhtmltopdf="D:/Software/wkhtmltopdf/bin/wkhtmltopdf.exe"), options=options)
+            print("here3")
             await self.generate_report(f'{current_dir}/files/export/{randomname}-report.docx')
     
+            print("here2")
+
             # Convert DOCX to PDF
             word = comtypes.client.CreateObject('Word.Application')
             word.Visible = False
@@ -372,7 +426,7 @@ class JISEBIReporting:
                 # Create a BytesIO stream from the content
                 pdf_stream = BytesIO(pdf_content)
                 pdf_stream.seek(0)  # Reset the stream pointer to the beginning
-                
+            
             files = ["report.pdf", "report.docx", "summary.pdf", "merged.pdf"]
             for type in files:
                 try:

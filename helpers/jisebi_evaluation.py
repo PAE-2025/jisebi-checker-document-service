@@ -165,7 +165,6 @@ class JISEBIEvaluation:
         return result
 
     async def check_document_font(self):
-        contents = self.jisebi_document.contents
         result = {
             'title': {}, 
             'authors': {}, 
@@ -243,9 +242,15 @@ class JISEBIEvaluation:
                         result["abstract"][abstract_section]["prefix"] = (self.check_paragraph_font(abstract_objects[section_object["paragraph"][abstract_section]["paragraph_index"]].runs[section_object["paragraph"][abstract_section]["heading"]["run_index"]["first"]], "Times New Roman", 8, True, True))
                     else:
                         #Checking the 'abstract_section' line styling
-                        result["abstract"][abstract_section]["body"] = (self.check_paragraph_font(abstract_objects[section_object["paragraph"][abstract_section]["paragraph_index"]], "Times New Roman", 9, False, None, style="JISEBI Abstract text"))
+                    
+                        prefix_run_index = section_object["paragraph"][abstract_section]["heading"]["run_index"]
+                        body_run_index = section_object["paragraph"][abstract_section]["body"]["run_index"]
+
+                        abstract_runs = abstract_objects[section_object["paragraph"][abstract_section]["paragraph_index"]].runs
+
+                        result["abstract"][abstract_section]["prefix"] = (self.check_paragraph_font(abstract_runs[prefix_run_index["first"]], "Times New Roman", 9, True, False))
                         # Checking the 'abstract_section' Prefix
-                        result["abstract"][abstract_section]["prefix"] = (self.check_paragraph_font(abstract_objects[section_object["paragraph"][abstract_section]["paragraph_index"]].runs[section_object["paragraph"][abstract_section]["heading"]["run_index"]["first"]], "Times New Roman", 9, True, False))
+                        result["abstract"][abstract_section]["body"] = (self.check_paragraph_font(abstract_runs[body_run_index["first"]:body_run_index["last"]], "Times New Roman", 9, False, None, style="JISEBI Abstract text"))
             elif section == "references":
                 result[section]["heading"] = {}
                 result[section]["body"] = {}
@@ -254,8 +259,9 @@ class JISEBIEvaluation:
                 result[section]["body"] = (self.check_paragraph_font(section_object["paragraph"]["object"], "Times New Roman", 10, None, None, style="references"))
             else:
                 # continue
+
                 (result[section])["heading"] = self.check_paragraph_font(section_object["heading"]["object"], "Times New Roman", 10, False, False, style="JISEBI Heading 1")
-                result[section]["body"] = self.check_paragraph_font(section_object["paragraph"]["object"], "Times New Roman", 10, None, None)
+                result[section]["body"] = self.check_paragraph_font(section_object["paragraph"]["object"], "Times New Roman", 10, None, None, None)
         
         return result
 
@@ -306,21 +312,24 @@ class JISEBIEvaluation:
                 #Check if content is a Table
                 if type(para) == docx.table.Table:
                     continue
-                
-                # Check each run in the paragraph
-                run_issues = self.check_run_font(para.runs, font_name, font_size, bold, italic, style, paragraph_style=paragraph_style)
-                if run_issues and run_issues != {"message": "No issues in this part"}:
-                    issues.append(run_issues)
 
-                # If there are issues with this paragraph, add to results
-                if (issues or paragraph_issues):
-                    results[f"{i}"] = {
-                        "run_issues": issues,
-                        "paragraph_issues": paragraph_issues
-                    }
+                if (para.text != "" and para.text != None):
+                
+                    # Check each run in the paragraph
+                    run_issues = self.check_run_font(para.runs, font_name, font_size, bold, italic, style, paragraph_style=paragraph_style)
+                    if run_issues and run_issues != {"message": "No issues in this part"}:
+                        issues = run_issues
+
+                    # If there are issues with this paragraph, add to results
+                    if (issues or paragraph_issues):
+                        results[f"{i}"] = {
+                            "run_issues": issues,
+                            "paragraph_issues": paragraph_issues
+                        }
+
             if results == {}:
                 pass
-
+            
             return results
 
     def check_run_font(self, runs: Union[List, Any], 
@@ -384,26 +393,26 @@ class JISEBIEvaluation:
         # If default font couldn't be extracted, use Times New Roman as fallback
         if default_font_name is None:
             default_font_name = "Times New Roman"
-        
-        results = {}
-            
-            # Check each run in the paragraph
-        for run_idx, run in enumerate(runs):
-            run_issues = {}
 
-            if re.match(r'\s*', run.text):
+        run_issues = []
+        
+        # Check each run in the paragraph
+        for run_idx, run in enumerate(runs):
+            run_issue = {}
+
+            if re.match(r'^\s*$', run.text):
                 continue
-            
-            # Check font name if specified
+
             if font_name is not None:
                 actual_font = run.font.name
-                
+               
                 # If the font is None (meaning it's the default font)
                 if actual_font is None:
+
                     actual_font = default_font_name
                 
                 if actual_font != font_name:
-                    run_issues["font_name"] = f"Font name is '{actual_font}' instead of '{font_name}'"
+                    run_issue["font_name"] = f"Font name is '{actual_font}' instead of '{font_name}'"
             
             # Check font size if specified
             if font_size is not None:
@@ -412,36 +421,35 @@ class JISEBIEvaluation:
                 if run.font.size is None:
                     actual_font_size = default_font_size
                     if actual_font_size*2 != expected_size:
-                        run_issues["font_size"] = f"Font size is {actual_font_size}pt instead of {font_size}pt"
+                        run_issue["font_size"] = f"Font size is {actual_font_size}pt instead of {font_size}pt"
                 elif run.font.size.pt * 2 != expected_size:
-                    run_issues["font_size"] = f"Font size is {run.font.size.pt}pt instead of {font_size}pt"
+                    run_issue["font_size"] = f"Font size is {run.font.size.pt}pt instead of {font_size}pt"
             
             # Check bold if specified
             if bold is not None:
                 if run.bold is None:  # None means it's using the default setting
                     actual_font_bold = default_font_bold
                     if actual_font_bold != bold:
-                        run_issues["bold"] = (f"Bold is {actual_font_bold} instead of {bold} with {paragraph_style}")
+                        run_issue["bold"] = (f"Bold is {actual_font_bold} instead of {bold} with {paragraph_style}")
                 elif run.bold != bold:
-                    run_issues["bold"] = (f"Bold is {run.bold} instead of {bold}")
+                    run_issue["bold"] = (f"Bold is {run.bold} instead of {bold}")
             
             # Check italic if specified
             if italic is not None:
                 if run.italic is None:  # None means it's using the default setting
                     actual_font_italic = default_font_italic
                     if actual_font_italic != italic:
-                        run_issues["italic"] = (f"Italic is {actual_font_italic} instead of {italic}")
+                        run_issue["italic"] = (f"Italic is {actual_font_italic} instead of {italic}")
                 elif run.italic != italic:
-                    run_issues["italic"] = (f"Italic is {run.italic} instead of {italic}")
+                    run_issue["italic"] = (f"Italic is {run.italic} instead of {italic}")
             
-            # If there are issues with this run, add to the list
-            if run_issues:
-                return {
+            if run_issue != {}:
+                run_issues.append({
                     "run_index": run_idx,
                     "text": run.text,
-                    "issues": run_issues
-                }
+                    "issues": run_issue
+                })
 
-        return {}
+        return run_issues
 
 

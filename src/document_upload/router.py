@@ -1,12 +1,18 @@
 from fastapi import APIRouter, File, UploadFile, Depends, HTTPException, Request
 from fastapi.responses import StreamingResponse, JSONResponse
-from document_upload.service import JISEBIProcessingService
+from src.document_upload.service import JISEBIProcessingService
+from src.document_upload.dependencies import get_processing_service
 import io
 
 router = APIRouter()
 
 @router.post("/upload")
-async def complex_operation_endpoint(request: Request, file: UploadFile = File(...), service: JISEBIProcessingService = Depends()):
+async def complex_operation_endpoint(
+    request: Request, 
+    file: UploadFile = File(...), 
+    service: JISEBIProcessingService = Depends(get_processing_service)
+    ):
+
     # Validate file type
     if not file.filename.endswith('.docx'):
         raise HTTPException(

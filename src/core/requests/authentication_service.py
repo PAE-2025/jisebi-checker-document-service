@@ -3,7 +3,7 @@ from typing import Dict, Any, Tuple, Optional
 import logging
 from fastapi import Depends
 
-from core.config import get_settings, Settings
+from src.core.config import get_settings, Settings
 
 logger = logging.getLogger(__name__)
 

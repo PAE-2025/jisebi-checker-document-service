@@ -1,12 +1,12 @@
 from fastapi import FastAPI
 from fastapi.responses import HTMLResponse
-from document_upload import router as document_upload_router
-from core.requests.authentication_service import AuthService
-from core.config import get_settings
-from core.requests.authentication_service import AuthService
-from core.middleware.auth import AuthenticationMiddleware
+from src.document_upload import router as document_upload_router
+from src.core.requests.authentication_service import AuthService
+from src.core.config import get_settings
+from src.core.requests.authentication_service import AuthService
+from src.core.middleware.auth import AuthenticationMiddleware
 
-from document_upload.helpers.jisebi_reporting import rendur
+from src.document_upload.helpers.jisebi_reporting import rendur
 
 
 app = FastAPI(title="JISEBI Document Processing API", description="Upload document and get your evaluation")

@@ -7,7 +7,7 @@ import logging
 from starlette.middleware.base import BaseHTTPMiddleware
 from starlette.types import ASGIApp
 
-from core.requests.authentication_service import AuthService
+from src.core.requests.authentication_service import AuthService
 
 logger = logging.getLogger(__name__)
 

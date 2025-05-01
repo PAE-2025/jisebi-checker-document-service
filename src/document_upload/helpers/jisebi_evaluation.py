@@ -6,7 +6,7 @@ import xml.etree.ElementTree as ET
 from docx.shared import RGBColor
 from docx.enum.text import WD_COLOR_INDEX
 from copy import deepcopy
-from helpers.jisebi_document import JISEBIDocument
+from src.document_upload.helpers.jisebi_document import JISEBIDocument
 import asyncio
 
 class JISEBIEvaluation:

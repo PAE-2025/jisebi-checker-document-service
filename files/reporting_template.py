@@ -152,15 +152,15 @@ template_str = """
         <h3> Title: {{ title }} </h3>
         <div class="summary-stats">
             <div class="stat-item">
-                <div class="stat-label">Total Issues</div>
+                <div class="stat-label">Sections with Issue</div>
                 <div class="stat-value">{{ total_issues }}</div>
             </div>
             <div class="stat-item">
-                <div class="stat-label">Sequence Issues</div>
+                <div class="stat-label">Sections with Sequence Issues</div>
                 <div class="stat-value">{{ sections_with_sequence_issues }}</div>
             </div>
             <div class="stat-item">
-                <div class="stat-label">Style Issues</div>
+                <div class="stat-label">Sections with Style Issues</div>
                 <div class="stat-value"> {{ sections_with_style_issues }} </div>
             </div>
             <div class="stat-item">
@@ -171,216 +171,34 @@ template_str = """
     </div>
 
     <div class="dashboard">
-        <!-- Structure Issues Section -->
-
-        <!-- Title Section -->
+    {% for section in sections %}
+        {% if "literature_review" not in data %}
+        {% else %}
         <div class="section-card">
             <div class="section-header">
-                Title
-
-                {% if data["title"]["section_issue"]["not_found"] == [] and data["title"]["section_issue"]["sequence"] == [] %}
+                {{ section | title }}
+                {% if data[section]["section_issue"]["not_found"] == [] and data[section]["section_issue"]["sequence"] == [] and (data[section]["body"] == {} or "body" not in data[section]) and (data[section]["heading"] == {} or "heading" not in data[section]) %}
                     <span class="status-tag status-pass">No Issues</span>
                 {% endif %}       
 
-                {% if data["title"]["section_issue"]["sequence"] != [] %}
+                {% if data[section]["section_issue"]["sequence"] != [] %}
                     <span class="status-tag status-warning">Sequence Issue</span>
+                {% endif %} 
+
+                {% if (data[section]["body"] != {} and "body" in data[section]) or (data[section]["heading"] != {} and "heading" in data[section]) %}
+                    <span class="status-tag status-error"> {{ data[section]["body"] | length + data[section]["heading"] | length}} Style Issues</span>
                 {% endif %} 
 
             </div>
             <div class="section-body">
-
-                {% if data["title"]["section_issue"]["not_found"] == [] and data["title"]["section_issue"]["sequence"] == [] %}
-                    <p>This section has proper formatting and sequence.</p>
-                {% endif %}  
-
-                {% if data["title"]["section_issue"]["sequence"] != [] %}
-                    <p>This section has a sequence issue related to the Title section.</p>
-                    <ul class="issue-list">
-                        <li class="issue-item sequence">{{ data["title"]["section_issue"]["sequence"][0] }}</li>
-                    </ul>
-                {% endif %}
-
-                {% if data["title"]["section_issue"]["not_found"] != [] %}
-                    <ul class="issue-list">
-                        <li class="issue-item sequence">{{ data["title"]["section_issue"]["not_found"][0] }}</li>
-                    </ul>
-                {% endif %}
-                
-            </div>
-        </div>
-
-        <!-- Authors Section -->
-        <div class="section-card">
-            <div class="section-header">
-                Authors
-                {% if data["authors"]["section_issue"]["not_found"] == [] and data["authors"]["section_issue"]["sequence"] == [] %}
-                    <span class="status-tag status-pass">No Issues</span>
-                {% endif %}       
-
-                {% if data["authors"]["section_issue"]["sequence"] != [] %}
-                    <span class="status-tag status-warning">Sequence Issue</span>
-                {% endif %} 
-            </div>
-            <div class="section-body">
-
-                {% if data["authors"]["section_issue"]["not_found"] == [] and data["authors"]["section_issue"]["sequence"] == [] %}
-                    <p>This section has proper formatting and sequence. </p>
-                {% endif %}  
-
-                {% if data["authors"]["section_issue"]["sequence"] != [] %}
-                    <p>This section has a sequence issue related to the Authors section.</p>
-                    <ul class="issue-list">
-                        <li class="issue-item sequence">{{ data["authors"]["section_issue"]["sequence"][0] }}</li>
-                    </ul>
-                {% endif %}
-
-                {% if data["authors"]["section_issue"]["not_found"] != [] %}
-                    <ul class="issue-list">
-                        <li class="issue-item sequence">{{ data["authors"]["section_issue"]["not_found"][0] }}</li>
-                    </ul>
-                {% endif %}
-
-            </div>
-        </div>
-
-        <!-- Abstract Section -->
-        <div class="section-card">
-            <div class="section-header">
-                Abstract
-                {% if data["abstract"]["section_issue"]["not_found"] == [] and data["abstract"]["section_issue"]["sequence"] == [] %}
-                    <span class="status-tag status-pass">No Issues</span>
-                {% endif %}       
-
-                {% if data["abstract"]["section_issue"]["sequence"] != [] %}
-                    <span class="status-tag status-warning">Sequence Issue</span>
-                {% endif %} 
-            </div>
-            <div class="section-body">
-                {% if data["abstract"]["section_issue"]["not_found"] == [] and data["abstract"]["section_issue"]["sequence"] == [] %}
-                    <p>This section has proper formatting and sequence. </p>
-                {% endif %}  
-
-                {% if data["abstract"]["section_issue"]["sequence"] != [] %}
-                    <p>This section has a sequence issue related to the Abstract section.</p>
-                    <ul class="issue-list">
-                        <li class="issue-item sequence">{{ data["abstract"]["section_issue"]["sequence"][0] }}</li>
-                    </ul>
-                {% endif %}
-
-                {% if data["abstract"]["section_issue"]["not_found"] != [] %}
-                    <ul class="issue-list">
-                        <li class="issue-item sequence">{{ data["abstract"]["section_issue"]["not_found"][0] }}</li>
-                    </ul>
-                {% endif %}
-            </div>
-        </div>
-
-        <!-- Introduction Section -->
-        <div class="section-card">
-            <div class="section-header">
-                Introduction
-                {% if data["introduction"]["section_issue"]["not_found"] == [] and data["introduction"]["section_issue"]["sequence"] == [] and data["introduction"]["body"] == {} and data["introduction"]["heading"] == {} %}
-                    <span class="status-tag status-pass">No Issues</span>
-                {% endif %}       
-        
-                {% if data["introduction"]["section_issue"]["sequence"] != [] %}
-                    <span class="status-tag status-warning">Sequence Issue</span>
-                {% endif %} 
-        
-                {% if data["introduction"]["body"] != {} or data["introduction"]["heading"] != {}  %}
-                    <span class="status-tag status-error"> {{ data["introduction"]["body"] | length + data["introduction"]["heading"] | length}} Style Issues</span>
-                {% endif %} 
-        
-            </div>
-            <div class="section-body">
-                {% if data["introduction"]["section_issue"]["not_found"] == [] and data["introduction"]["section_issue"]["sequence"] == [] and data["introduction"]["body"] == {} and data["introduction"]["heading"] == {} %}
-                    <p>This section has proper formatting and sequence. </p>
-                {% else %}  
-                    <p>Multiple paragraphs in this section have incorrect styling.</p>
-                {% endif %}
-        
-                {% for key, value in data["introduction"]["body"].items() %}
-                    
-                    <div class="reference-item">
-                        <strong>Paragraph {{key}}:</strong> 
-                            {% if value["paragraph_issues"] != {} %}
-                                {{value["paragraph_issues"]["style"]}} &nbsp;
-                            {% endif %}
-                            {% if value["run_issues"] != [] %}
-                                Make sure the font size, bold, and italic is correct
-                            {% endif %}
-                    </div>
-        
-                {% endfor %}
-            </div>
-        </div>
-
-        <!-- Methods Section -->
-        <div class="section-card">
-            <div class="section-header">
-                Method
-                {% if data["method"]["section_issue"]["not_found"] == [] and data["method"]["section_issue"]["sequence"] == [] and data["method"]["body"] == {} and data["method"]["heading"] == {} %}
-                    <span class="status-tag status-pass">No Issues</span>
-                {% endif %}       
-        
-                {% if data["method"]["section_issue"]["sequence"] != [] %}
-                    <span class="status-tag status-warning">Sequence Issue</span>
-                {% endif %} 
-        
-                {% if data["method"]["body"] != {} or data["method"]["heading"] != {}  %}
-                    <span class="status-tag status-error"> {{ data["method"]["body"] | length + data["method"]["heading"] | length}} Style Issues</span>
-                {% endif %} 
-        
-            </div>
-            <div class="section-body">
-                {% if data["method"]["section_issue"]["not_found"] == [] and data["method"]["section_issue"]["sequence"] == [] and data["method"]["body"] == {} and data["method"]["heading"] == {} %}
-                    <p>This section has proper formatting and sequence. </p>
-                {% else %}  
-                    <p>Multiple paragraphs in this section have incorrect styling.</p>
-                {% endif %}
-        
-                {% for key, value in data["method"]["body"].items() %}
-                    
-                    <div class="reference-item">
-                        <strong>Paragraph {{key}}:</strong> 
-                            {% if value["paragraph_issues"] != {} %}
-                                {{value["paragraph_issues"]["style"]}} &nbsp;
-                            {% endif %}
-                            {% if value["run_issues"] != [] %}
-                                Make sure the font size, bold, and italic is correct
-                            {% endif %}
-                    </div>
-        
-                {% endfor %}
-            </div>
-        </div>
-
-        <!-- Literature Review Section -->
-        {% if "literature_review" in data %}
-            <div class="section-card">
-                <div class="section-header">
-                    Literature Review
-                    {% if data["literature_review"]["section_issue"]["not_found"] == [] and data["literature_review"]["section_issue"]["sequence"] == [] and data["literature_review"]["body"] == {} and data["literature_review"]["heading"] == {} %}
-                        <span class="status-tag status-pass">No Issues</span>
-                    {% endif %}       
-            
-                    {% if data["literature_review"]["section_issue"]["sequence"] != [] %}
-                        <span class="status-tag status-warning">Sequence Issue</span>
-                    {% endif %} 
-            
-                    {% if data["literature_review"]["body"] != {} or data["literature_review"]["heading"] != {}  %}
-                        <span class="status-tag status-error"> {{ data["literature_review"]["body"] | length + data["literature_review"]["heading"] | length}} Style Issues</span>
-                    {% endif %} 
-            
-                </div>
-                <div class="section-body">
-                    {% if data["literature_review"]["section_issue"]["not_found"] == [] and data["literature_review"]["section_issue"]["sequence"] == [] and data["literature_review"]["body"] == {} and data["literature_review"]["heading"] == {} %}
+                {% if "body" in data[section] and "heading" in data[section] %}
+                    {% if data["result"]["section_issue"]["not_found"] == [] and data["result"]["section_issue"]["sequence"] == [] and data[section]["body"] == {} and data[section]["heading"] == {} %}
                         <p>This section has proper formatting and sequence. </p>
                     {% else %}  
                         <p>Multiple paragraphs in this section have incorrect styling.</p>
                     {% endif %}
-            
-                    {% for key, value in data["literature_review"]["body"].items() %}
+
+                    {% for key, value in data[section]["body"].items() %}
                         
                         <div class="reference-item">
                             <strong>Paragraph {{key}}:</strong> 
@@ -391,172 +209,15 @@ template_str = """
                                     Make sure the font size, bold, and italic is correct
                                 {% endif %}
                         </div>
-            
+
                     {% endfor %}
-                </div>
+                {% else %} <!-- WIP -->
+                    <p>This section has proper formatting and sequence. </p>
+                {% endif %}
             </div>
+        </div>
         {% endif %}
-
-        <!-- Results Section -->
-        <div class="section-card">
-            <div class="section-header">
-                Result
-                {% if data["result"]["section_issue"]["not_found"] == [] and data["result"]["section_issue"]["sequence"] == [] and data["result"]["body"] == {} and data["result"]["heading"] == {} %}
-                    <span class="status-tag status-pass">No Issues</span>
-                {% endif %}       
-        
-                {% if data["result"]["section_issue"]["sequence"] != [] %}
-                    <span class="status-tag status-warning">Sequence Issue</span>
-                {% endif %} 
-        
-                {% if data["result"]["body"] != {} or data["result"]["heading"] != {}  %}
-                    <span class="status-tag status-error"> {{ data["result"]["body"] | length + data["result"]["heading"] | length}} Style Issues</span>
-                {% endif %} 
-        
-            </div>
-            <div class="section-body">
-                {% if data["result"]["section_issue"]["not_found"] == [] and data["result"]["section_issue"]["sequence"] == [] and data["result"]["body"] == {} and data["result"]["heading"] == {} %}
-                    <p>This section has proper formatting and sequence. </p>
-                {% else %}  
-                    <p>Multiple paragraphs in this section have incorrect styling.</p>
-                {% endif %}
-        
-                {% for key, value in data["result"]["body"].items() %}
-                    
-                    <div class="reference-item">
-                        <strong>Paragraph {{key}}:</strong> 
-                            {% if value["paragraph_issues"] != {} %}
-                                {{value["paragraph_issues"]["style"]}} &nbsp;
-                            {% endif %}
-                            {% if value["run_issues"] != [] %}
-                                Make sure the font size, bold, and italic is correct
-                            {% endif %}
-                    </div>
-        
-                {% endfor %}
-            </div>
-        </div>
-
-        <!-- Discussion Section -->
-        <div class="section-card">
-            <div class="section-header">
-                Discussion
-                {% if data["discussion"]["section_issue"]["not_found"] == [] and data["discussion"]["section_issue"]["sequence"] == [] and data["discussion"]["body"] == {} and data["discussion"]["heading"] == {} %}
-                    <span class="status-tag status-pass">No Issues</span>
-                {% endif %}       
-        
-                {% if data["discussion"]["section_issue"]["sequence"] != [] %}
-                    <span class="status-tag status-warning">Sequence Issue</span>
-                {% endif %} 
-        
-                {% if data["discussion"]["body"] != {} or data["discussion"]["heading"] != {}  %}
-                    <span class="status-tag status-error"> {{ data["discussion"]["body"] | length + data["discussion"]["heading"] | length}} Style Issues</span>
-                {% endif %} 
-        
-            </div>
-            <div class="section-body">
-                {% if data["result"]["section_issue"]["not_found"] == [] and data["result"]["section_issue"]["sequence"] == [] and data["discussion"]["body"] == {} and data["discussion"]["heading"] == {} %}
-                    <p>This section has proper formatting and sequence. </p>
-                {% else %}  
-                    <p>Multiple paragraphs in this section have incorrect styling.</p>
-                {% endif %}
-        
-                {% for key, value in data["discussion"]["body"].items() %}
-                    
-                    <div class="reference-item">
-                        <strong>Paragraph {{key}}:</strong> 
-                            {% if value["paragraph_issues"] != {} %}
-                                {{value["paragraph_issues"]["style"]}} &nbsp;
-                            {% endif %}
-                            {% if value["run_issues"] != [] %}
-                                Make sure the font size, bold, and italic is correct
-                            {% endif %}
-                    </div>
-        
-                {% endfor %}
-            </div>
-        </div>
-
-        <!-- Conclusion Section -->
-        <div class="section-card">
-            <div class="section-header">
-                Conclusion
-                {% if data["conclusion"]["section_issue"]["not_found"] == [] and data["conclusion"]["section_issue"]["sequence"] == [] and data["conclusion"]["body"] == {} and data["conclusion"]["heading"] == {} %}
-                    <span class="status-tag status-pass">No Issues</span>
-                {% endif %}       
-        
-                {% if data["conclusion"]["section_issue"]["sequence"] != [] %}
-                    <span class="status-tag status-warning">Sequence Issue</span>
-                {% endif %} 
-        
-                {% if data["conclusion"]["body"] != {} or data["conclusion"]["heading"] != {}  %}
-                    <span class="status-tag status-error"> {{ data["conclusion"]["body"] | length + data["conclusion"]["heading"] | length}} Style Issues</span>
-                {% endif %} 
-        
-            </div>
-            <div class="section-body">
-                {% if data["result"]["section_issue"]["not_found"] == [] and data["result"]["section_issue"]["sequence"] == [] and data["conclusion"]["body"] == {} and data["conclusion"]["heading"] == {} %}
-                    <p>This section has proper formatting and sequence. </p>
-                {% else %}  
-                    <p>Multiple paragraphs in this section have incorrect styling.</p>
-                {% endif %}
-        
-                {% for key, value in data["conclusion"]["body"].items() %}
-                    
-                    <div class="reference-item">
-                        <strong>Paragraph {{key}}:</strong> 
-                            {% if value["paragraph_issues"] != {} %}
-                                {{value["paragraph_issues"]["style"]}} &nbsp;
-                            {% endif %}
-                            {% if value["run_issues"] != [] %}
-                                Make sure the font size, bold, and italic is correct
-                            {% endif %}
-                    </div>
-        
-                {% endfor %}
-            </div>
-        </div>
-        
-        <!-- References Section -->
-        <div class="section-card">
-            <div class="section-header">
-                References
-                {% if data["references"]["section_issue"]["not_found"] == [] and data["references"]["section_issue"]["sequence"] == [] and data["references"]["body"] == {} and data["references"]["heading"] == {} %}
-                    <span class="status-tag status-pass">No Issues</span>
-                {% endif %}       
-
-                {% if data["references"]["section_issue"]["sequence"] != [] %}
-                    <span class="status-tag status-warning">Sequence Issue</span>
-                {% endif %} 
-
-                {% if data["references"]["body"] != {} or data["references"]["heading"] != {}  %}
-                    <span class="status-tag status-error"> {{ data["references"]["body"] | length + data["references"]["heading"] | length}} Style Issues</span>
-                {% endif %} 
-
-            </div>
-            <div class="section-body">
-                {% if data["result"]["section_issue"]["not_found"] == [] and data["result"]["section_issue"]["sequence"] == [] and data["references"]["body"] == {} and data["references"]["heading"] == {} %}
-                    <p>This section has proper formatting and sequence. </p>
-                {% else %}  
-                    <p>Multiple paragraphs in this section have incorrect styling.</p>
-                {% endif %}
-
-                {% for key, value in data["references"]["body"].items() %}
-                    
-                    <div class="reference-item">
-                        <strong>Paragraph {{key}}:</strong> 
-                            {% if value["paragraph_issues"] != {} %}
-                                {{value["paragraph_issues"]["style"]}} &nbsp;
-                            {% endif %}
-                            {% if value["run_issues"] != [] %}
-                                Make sure the font size, bold, and italic is correct
-                            {% endif %}
-                    </div>
-
-                {% endfor %}
-            </div>
-        </div>
-
+    {% endfor %}
     </div>
 
     <script>

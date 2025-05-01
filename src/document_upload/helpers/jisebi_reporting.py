@@ -365,6 +365,7 @@ class JISEBIReporting:
             sections_with_sequence_issues=sections_with_sequence_issues,
             sections_with_not_found_issues=sections_with_not_found_issues,
             sections_with_style_issues=sections_with_style_issues,
+            sections=["title", "authors", "abstract", "introduction", "method", "literature_review", "result", "discussion", "conclusion", "references"]
         )
         
         return html
@@ -395,6 +396,7 @@ class JISEBIReporting:
             options = {
                 'page-size': 'Letter'
             }
+            
             pdfkit.from_string(await self.generate_dashboard_html(), output_path=f'{current_dir}/files/export/{randomname}-summary.pdf',configuration=pdfkit.configuration(wkhtmltopdf="D:/Software/wkhtmltopdf/bin/wkhtmltopdf.exe"), options=options)
             print("here3")
             await self.generate_report(f'{current_dir}/files/export/{randomname}-report.docx')

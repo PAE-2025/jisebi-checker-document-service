@@ -1,9 +1,9 @@
 from fastapi import FastAPI
 from fastapi.responses import HTMLResponse
-from routers import upload
-from services.authentication_service import AuthService
+from document_upload import document_upload_router
+from core.requests.authentication_service import AuthService
 from core.config import get_settings
-from services.authentication_service import AuthService
+from core.requests.authentication_service import AuthService
 from core.middleware.auth import AuthenticationMiddleware
 
 from helpers.jisebi_reporting import rendur
@@ -23,7 +23,7 @@ app.add_middleware(
 )
 
 # Register Routers
-app.include_router(upload.router, prefix="/api", tags=["Search"])
+app.include_router(document_upload_router.router, prefix="/api", tags=["Search"])
 
 @app.get("/redocc")
 async def root():

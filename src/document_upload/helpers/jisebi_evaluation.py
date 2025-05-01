@@ -55,6 +55,7 @@ class JISEBIEvaluation:
             "discussion": {"section_issue": {"not_found": []}},
             "conclusion":{"section_issue": {"not_found": []}},
             "references": {"section_issue": {"not_found": []}},
+            "literature_review": {"section_issue": {"not_found": []}},
         }
     
         sections = ['title', 'authors', 'abstract', 'introduction', 'method', 'result', 'discussion', 'conclusion', 'references']

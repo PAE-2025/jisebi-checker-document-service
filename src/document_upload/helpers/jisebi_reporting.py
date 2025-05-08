@@ -11,10 +11,10 @@ from typing import Dict
 from datetime import datetime
 import pdfkit
 from PyPDF2 import PdfMerger
-import comtypes.client
 import random
 import string
 import os
+from src.core.config import get_settings, Settings
 
 class JISEBIReporting:
 
@@ -387,6 +387,7 @@ class JISEBIReporting:
 
     async def generate_final_report(self):
         try:
+            settings: Settings = get_settings()
             randomname = ''.join(random.choices(string.ascii_letters, k=15))
             current_dir = os.getcwd()
 
@@ -396,21 +397,32 @@ class JISEBIReporting:
             options = {
                 'page-size': 'Letter'
             }
-            
-            pdfkit.from_string(await self.generate_dashboard_html(), output_path=f'{current_dir}/files/export/{randomname}-summary.pdf',configuration=pdfkit.configuration(wkhtmltopdf="D:/Software/wkhtmltopdf/bin/wkhtmltopdf.exe"), options=options)
+
+            pdfkit.from_string(await self.generate_dashboard_html(), output_path=f'{current_dir}/files/export/{randomname}-summary.pdf', options=options)
+   
             print("here3")
             await self.generate_report(f'{current_dir}/files/export/{randomname}-report.docx')
     
             print("here2")
 
             # Convert DOCX to PDF
-            word = comtypes.client.CreateObject('Word.Application')
-            word.Visible = False
-            print('tes')
-            doc = word.Documents.Open(f'{current_dir}/files/export/{randomname}-report.docx')
-            doc.SaveAs(f'{current_dir}/files/export/{randomname}-report.pdf', FileFormat=17) # 17 is PDF format
-            doc.Close()
-            word.Quit()
+
+            docx_path = f'{current_dir}/files/export/{randomname}-report.docx'
+
+            if settings.PLATFORM == "WINDOWS":
+                
+                import comtypes.client
+                word = comtypes.client.CreateObject('Word.Application')
+                word.Visible = False
+                print('tes')
+                doc = word.Documents.Open(docx_path)
+                doc.SaveAs(f'{current_dir}/files/export/{randomname}-report.pdf', FileFormat=17) # 17 is PDF format
+                doc.Close()
+                word.Quit()
+
+            elif settings.PLATFORM == "LINUX":
+                import subprocess
+                subprocess.run(["libreoffice", "--headless", "--convert-to", "pdf:writer_pdf_Export", docx_path, "--outdir", f'{current_dir}/files/export'])
 
             # Merge the PDFs
             merger = PdfMerger()

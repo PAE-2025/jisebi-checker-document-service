@@ -12,6 +12,7 @@ load_dotenv(env_file)
 
 class Settings(BaseSettings):
     AUTH_SERVICE_URL: str
+    PLATFORM: str
     
     class Config:
         env_file = env_file

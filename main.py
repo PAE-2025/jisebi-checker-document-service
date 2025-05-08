@@ -5,6 +5,7 @@ from src.core.requests.authentication_service import AuthService
 from src.core.config import get_settings
 from src.core.requests.authentication_service import AuthService
 from src.core.middleware.auth import AuthenticationMiddleware
+from fastapi.middleware.cors import CORSMiddleware
 
 from src.document_upload.helpers.jisebi_reporting import rendur
 
@@ -14,6 +15,15 @@ settings = get_settings()
 
 # Create auth service instance
 auth_service = AuthService(settings)
+
+# Allow requests from your frontend (Next.js on localhost:3000)
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=["http://localhost:3000"],  # Adjust for production
+    allow_credentials=True,
+    allow_methods=["*"],  # Allows all HTTP methods
+    allow_headers=["*"],  # Allows all headers
+)
 
 # Add the authentication middleware
 app.add_middleware(

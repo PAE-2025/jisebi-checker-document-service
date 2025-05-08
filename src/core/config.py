@@ -7,7 +7,7 @@ from functools import lru_cache
 load_dotenv()
 
 # Then load the appropriate environment-specific file
-env_file = f".env.{os.getenv('ENVIRONMENT', 'development').lower()}"
+env_file = f".env"
 load_dotenv(env_file)
 
 class Settings(BaseSettings):

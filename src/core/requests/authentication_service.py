@@ -29,7 +29,7 @@ class AuthService:
         async with httpx.AsyncClient() as client:
             try:
                 response = await client.post(
-                    f"{self.auth_service_url}/verify-token",
+                    f"{self.auth_service_url}/auth/verify-token",
                     headers={"Authorization": token},
                     timeout=self.timeout
                 )
@@ -38,7 +38,8 @@ class AuthService:
                 response.raise_for_status()
                 
                 data = response.json()
-                is_valid = data.get("valid", False)
+                logger.warning(data)
+                is_valid = data.get("status", False)
                 user_info = data.get("user_info", {}) if is_valid else None
                 
                 return is_valid, user_info

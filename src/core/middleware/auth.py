@@ -1,5 +1,5 @@
 # app/core/middleware/auth.py
-from fastapi import Request, HTTPException, Depends
+from fastapi import Request, Depends, HTTPException
 from fastapi.security import HTTPBearer
 from fastapi.responses import JSONResponse
 from typing import List
@@ -35,19 +35,27 @@ class AuthenticationMiddleware(BaseHTTPMiddleware):
             if not auth_header:
                 return HTTPException(
                     status_code=401,
-                    detail="Authorization header missing",
+                    detail= {
+                        "status": False,
+                        "message":"Authorization header missing" 
+                    },
                     headers={"WWW-Authenticate": "Bearer"}
                 )
             
             # Validate with auth service
             try:
-                token = auth_header.replace("Bearer ", "")
+                token = auth_header
                 is_valid, user_info = await self.auth_service.validate_token(token)
+
+                logger.warning([is_valid, user_info])
                 
                 if not is_valid:
                     raise HTTPException(
                         status_code=401,
-                        detail="Invalid or expired token",
+                        detail= {
+                            "status": False,
+                            "message": "Invalid or expired token"
+                        },
                         headers={"WWW-Authenticate": "Bearer"}
                     )
                 
@@ -60,11 +68,14 @@ class AuthenticationMiddleware(BaseHTTPMiddleware):
             except HTTPException as e:
                 # Re-raise HTTP exceptions
                 raise
-            except Exception as e:
+            except BaseException as e:
                 logger.error(f"Authentication error: {str(e)}")
                 raise HTTPException(
                     status_code=500,
-                    detail="Authentication service error"
+                    detail={
+                        "status": False,
+                        "message": "Authentication service error"
+                    }
                 )
         except HTTPException as e:
             return JSONResponse(status_code=e.status_code, content= {"status": False, "message":e.detail})

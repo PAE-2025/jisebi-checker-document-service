@@ -13,6 +13,20 @@ load_dotenv(env_file)
 class Settings(BaseSettings):
     AUTH_SERVICE_URL: str
     PLATFORM: str
+    MONGODB_URI: str
+    JWT_SECRET: str
+
+    # Task processor settings
+    WORKER_SLEEP_TIME: int = 1  # seconds to sleep when no tasks are found
+    ERROR_SLEEP_TIME: int = 5   # seconds to sleep after an error
+    PROCESSING_TIME: int = 5    # seconds to simulate task processing (for demo)
+    
+    # Task statuses
+    STATUS_QUEUED: str = "on_queue"
+    STATUS_PROCESSING: str = "processing"
+    STATUS_COMPLETED: str = "completed"
+    STATUS_FAILED: str = "failed"
+    STATUS_CANCELLED: str = "cancelled"
     
     class Config:
         env_file = env_file

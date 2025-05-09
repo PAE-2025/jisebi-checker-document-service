@@ -3,6 +3,7 @@ from fastapi.responses import StreamingResponse, JSONResponse
 from src.document_upload.service import JISEBIProcessingService
 from src.document_upload.dependencies import get_processing_service
 import io
+import logging
 
 router = APIRouter()
 
@@ -22,14 +23,17 @@ async def complex_operation_endpoint(
     
     contents = await file.read()
     bytes_io = io.BytesIO(contents)
+
     
     try:
-
-        accept_header = request.headers.get("accept")
         
+        accept_header = request.headers.get("accept")
+
+        user = request.state.user
+
         # Return a specific response based on the 'Accept' header
         if "application/json" in accept_header:
-            reporting = await service.process_document(bytes_io, True)
+            reporting = await service.process_document(user['id'], bytes_io, True)
             return JSONResponse(
                 status_code=200,
                 content={
@@ -39,7 +43,7 @@ async def complex_operation_endpoint(
             )
             
         else:
-            reporting = await service.process_document(bytes_io)
+            reporting = await service.process_document(user['id'], bytes_io)
             return StreamingResponse(
                 reporting,
                 media_type="application/pdf",

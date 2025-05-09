@@ -1,3 +1,4 @@
+import logging
 from fastapi import FastAPI
 from fastapi.responses import HTMLResponse
 from src.document_upload import router as document_upload_router
@@ -6,12 +7,44 @@ from src.core.config import get_settings
 from src.core.requests.authentication_service import AuthService
 from src.core.middleware.auth import AuthenticationMiddleware
 from fastapi.middleware.cors import CORSMiddleware
+from contextlib import asynccontextmanager
+from src.database import db
+from src.core.task_processor import task_processor
 
 from src.document_upload.helpers.jisebi_reporting import rendur
 
+logging.basicConfig(
+    level=logging.INFO,
+    format="%(asctime)s - %(name)s - %(levelname)s - %(message)s",
+)
 
-app = FastAPI(title="JISEBI Document Processing API", description="Upload document and get your evaluation")
+logger = logging.getLogger(__name__)
+
 settings = get_settings()
+
+@asynccontextmanager
+async def lifespan(app: FastAPI):
+    """
+    Handle application startup and shutdown events.
+    """
+    # Startup
+    logger.info("Application starting up...")
+    # Connect to database
+    await db.connect()
+    # Start task processor
+    await task_processor.start()
+    
+    yield
+    
+    # Shutdown
+    logger.info("Application shutting down...")
+    # Stop task processor
+    await task_processor.stop()
+    # Close database connection
+    await db.close()
+
+
+app = FastAPI(title="JISEBI Document Processing API", description="Upload document and get your evaluation", lifespan=lifespan)
 
 # Create auth service instance
 auth_service = AuthService(settings)

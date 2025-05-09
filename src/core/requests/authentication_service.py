@@ -40,7 +40,7 @@ class AuthService:
                 data = response.json()
                 logger.warning(data)
                 is_valid = data.get("status", False)
-                user_info = data.get("user_info", {}) if is_valid else None
+                user_info = data.get("data", {}).get("user") if is_valid else None
                 
                 return is_valid, user_info
                 

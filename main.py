@@ -29,8 +29,6 @@ async def lifespan(app: FastAPI):
     """
     # Startup
     logger.info("Application starting up...")
-    # Connect to database
-    await db.connect()
     # Start task processor
     await task_processor.start()
     
@@ -40,8 +38,6 @@ async def lifespan(app: FastAPI):
     logger.info("Application shutting down...")
     # Stop task processor
     await task_processor.stop()
-    # Close database connection
-    await db.close()
 
 
 app = FastAPI(title="JISEBI Document Processing API", description="Upload document and get your evaluation", lifespan=lifespan)

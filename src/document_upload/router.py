@@ -75,10 +75,9 @@ async def list_Uploads(
         query["status"] = status
     
     uploads = await db.list_documents(
-        "uploads",
         query=query,
         sort_by="created_at",
-        sort_direction=-1,  # Descending, newest first
+        sort_direction="DESCENDING",  # Descending, newest first
         skip=skip,
         limit=limit
     )

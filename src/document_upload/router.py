@@ -78,7 +78,6 @@ async def list_Uploads(
         query=query,
         sort_by="created_at",
         sort_direction="DESCENDING",  # Descending, newest first
-        skip=skip,
         limit=limit
     )
     

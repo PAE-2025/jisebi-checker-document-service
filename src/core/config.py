@@ -27,7 +27,10 @@ class Settings(BaseSettings):
     STATUS_COMPLETED: str = "completed"
     STATUS_FAILED: str = "failed"
     STATUS_CANCELLED: str = "cancelled"
-    
+    # Google Cloud Storage settings
+    FIRESTORE_DB_NAME: str
+    FIRESTORE_COLLECTION_NAME: str
+
     class Config:
         env_file = env_file
         env_file_encoding = 'utf-8'

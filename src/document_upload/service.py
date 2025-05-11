@@ -3,15 +3,54 @@ import datetime
 from src.document_upload.helpers.jisebi_document import JISEBIDocument
 from src.document_upload.helpers.jisebi_evaluation import JISEBIEvaluation
 from src.document_upload.helpers.jisebi_reporting import JISEBIReporting
-from src.database import upload_collections
+from src.database import db
+import uuid
 
 class JISEBIProcessingService:
+
     
     async def process_document(self, user_id:str, bytes:IO[bytes], json:bool=False) -> JISEBIReporting:
-        # Process the document using the service
-        document = JISEBIDocument(bytes)
 
-        await self.save_to_db(user_id, document.title["content"], document.authors["authors"]["content"], "null", "on_queue")
+        task_id = str(uuid.uuid4())
+        cleanup_needed = False
+
+        try:
+            # Process the document using the service
+            document = JISEBIDocument(bytes)
+
+            entry = {
+                "user_id": user_id,
+                "task_id": task_id,
+                "title": document.title["content"],
+                "authors": document.authors["authors"]["content"],
+                "status": "initializing",
+            }
+
+            doc_ref = db.add_document(data=entry, document_id=task_id)
+
+            #Add Queue
+
+            db.update_document(document_id=doc_ref, data={
+                'status': 'queued',
+            })
+
+            return {
+                "task_id": task_id,
+                "status": "queued",
+            }
+
+        except Exception as e:
+            if cleanup_needed:
+                try:
+                    db.delete_document(task_id)
+                except Exception as cleanup_error:
+                    # Log cleanup error
+                    print(f"Cleanup error: {cleanup_error}")
+            
+            raise Exception({
+                'error': 'Failed to process document',
+                'details': str(e)
+            }) 
 
         evaluation = JISEBIEvaluation(document)
         report = JISEBIReporting(evaluation)
@@ -22,15 +61,3 @@ class JISEBIProcessingService:
             return await report.generate_final_report()
         # await report.generate_report()
         # return evaluation.generate_overall_summary()
-
-    async def save_to_db(self, user_id: str, title:str, authors:str, file_uri: str, status: str):
-        entry = {
-            "user_id": user_id,
-            "title": title,
-            "authors": authors,
-            "file_uri": file_uri,
-            "status": status,
-            "created_at": datetime.datetime.now(datetime.timezone.utc)
-        }
-        await upload_collections.insert_one(entry)
-        return entry

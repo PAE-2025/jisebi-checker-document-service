@@ -1,85 +1,69 @@
-from pymongo import AsyncMongoClient
-
-from src.core.config import get_settings, Settings
-
-connection_string: Settings = get_settings().MONGODB_URI
-
-db = AsyncMongoClient(connection_string)["jisebi_documents"]
-
-upload_collections = db["uploads"]
-
-
-"""
-Database connection and helper functions.
-"""
 import logging
+import os
 from typing import Any, Dict, List, Optional
-from pymongo import ASCENDING, DESCENDING
-
+from google.cloud import firestore
 from src.core.config import get_settings
 
 settings = get_settings()
 logger = logging.getLogger(__name__)
 
-class Database:
-    """MongoDB database connection manager."""
-    client: Optional[AsyncMongoClient] = None
-    db: Optional[Any] = None
+credentials_path = settings.GCS_CREDENTIALS_FILE
+os.environ["GOOGLE_APPLICATION_CREDENTIALS"] = credentials_path
 
-    async def connect(self) -> None:
-        """Connect to MongoDB database."""
-        logger.info("Connecting to MongoDB...")
-        self.client = AsyncMongoClient(settings.MONGODB_URI)
-        self.db = self.client["jisebi_documents"]
-        
-        # Create indexes
-        tasks_collection = self.get_collection("uploads")
-        await tasks_collection.create_index([("created_at", ASCENDING)])
-        await tasks_collection.create_index("status")
-        # await tasks_collection.create_index([("priority", DESCENDING), ("created_at", ASCENDING)])
-        
-        logger.info("Connected to MongoDB")
+class FirestoreDatabase:
+    """Firestore database connection manager."""
+    
+    def __init__(self, collection_name):
+        self.client = firestore.Client(database=settings.FIRESTORE_DB_NAME)
+        self.collection_name = collection_name
+        self.collection = self.get_collection()
 
-    async def close(self) -> None:
-        """Close MongoDB connection."""
-        if self.client:
-            logger.info("Closing MongoDB connection...")
-            self.client.close()
-            logger.info("MongoDB connection closed")
+    def get_collection(self):
+        """Get Firestore collection reference."""
+        return self.client.collection(self.collection_name)
 
-    def get_collection(self, collection_name: str):
-        """Get MongoDB collection."""
-        if self.db is None:
-            raise RuntimeError("Database connection not established")
-        return self.db[collection_name]
-
-    async def get_document(
-        self, collection_name: str, document_id: str, key_name: str = "_id"
-    ) -> Optional[Dict[str, Any]]:
+    def get_document(self, document_id: str) -> Optional[Dict[str, Any]]:
         """Get a document by ID."""
-        collection = self.get_collection(collection_name)
-        document = await collection.find_one({key_name: document_id})
-        return document
+        doc = self.collection.document(document_id).get()
+        return doc.to_dict() if doc.exists else None
 
-    async def list_documents(
-        self, 
-        collection_name: str, 
+    def list_documents(
+        self,  
         query: Dict[str, Any] = None,
         sort_by: str = "created_at", 
-        sort_direction: int = -1,
-        skip: int = 0, 
+        sort_direction: str = "DESCENDING",
         limit: int = 100
     ) -> List[Dict[str, Any]]:
-        """List documents with pagination."""
-        collection = self.get_collection(collection_name)
-        cursor = collection.find(query or {})
-        cursor.sort(sort_by, sort_direction).skip(skip).limit(limit)
+        """List documents with optional query, sorting, and pagination."""
+        query_ref = self.collection
         
-        documents = []
-        async for document in cursor:
-            documents.append(document)
-        
-        return documents
+        if query:
+            for key, value in query.items():
+                query_ref = query_ref.where(key, "==", value)
+
+        query_ref = query_ref.order_by(sort_by, direction=firestore.Query.DESCENDING if sort_direction == "DESCENDING" else firestore.Query.ASCENDING).limit(limit)
+
+        return [doc.to_dict() for doc in query_ref.stream()]
+
+    def add_document(self, data: Dict[str, Any], document_id:str = None) -> str:
+        """Add a document to a collection and return the document ID."""
+        data["created_at"] = firestore.SERVER_TIMESTAMP
+        data["updated_at"] = firestore.SERVER_TIMESTAMP
+        if document_id == None:
+            response = self.collection.add(data)
+            document_id = response[1].id
+        else:
+            self.collection.document(document_id).set(data)
+        return document_id  # Firestore returns (document, reference)
+
+    def update_document(self, document_id: str, data: Dict[str, Any]) -> None:
+        """Update an existing document."""
+        data["updated_at"] = firestore.SERVER_TIMESTAMP
+        self.collection.document(document_id).update(data)
+
+    def delete_document(self, document_id: str) -> None:
+        """Delete a document by ID."""
+        self.collection.document(document_id).delete()
 
 # Global database instance
-db = Database()
+db = FirestoreDatabase(get_settings().FIRESTORE_COLLECTION_NAME)

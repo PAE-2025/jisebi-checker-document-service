@@ -62,9 +62,6 @@ class AuthenticationMiddleware(BaseHTTPMiddleware):
                 # Attach user info to request state for later use in route handlers
                 request.state.user = user_info
                 
-                # Continue processing the request
-                return await call_next(request)
-                
             except HTTPException as e:
                 # Re-raise HTTP exceptions
                 raise
@@ -79,6 +76,9 @@ class AuthenticationMiddleware(BaseHTTPMiddleware):
                 )
         except HTTPException as e:
             return JSONResponse(status_code=e.status_code, content= {"status": False, "message":e.detail})
+        
+        # Continue processing the request
+        return await call_next(request)
 
 
 # Helper function to create and configure the middleware

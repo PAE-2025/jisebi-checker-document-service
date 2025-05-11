@@ -27,7 +27,10 @@ class Settings(BaseSettings):
     STATUS_COMPLETED: str = "completed"
     STATUS_FAILED: str = "failed"
     STATUS_CANCELLED: str = "cancelled"
+
     # Google Cloud Storage settings
+    GCS_BUCKET_NAME: str
+    GCS_CREDENTIALS_FILE: str
     FIRESTORE_DB_NAME: str
     FIRESTORE_COLLECTION_NAME: str
 

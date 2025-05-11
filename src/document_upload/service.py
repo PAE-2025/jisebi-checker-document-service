@@ -4,6 +4,7 @@ from src.document_upload.helpers.jisebi_document import JISEBIDocument
 from src.document_upload.helpers.jisebi_evaluation import JISEBIEvaluation
 from src.document_upload.helpers.jisebi_reporting import JISEBIReporting
 from src.database import db
+from src.storage import storage
 import uuid
 
 class JISEBIProcessingService:
@@ -17,6 +18,10 @@ class JISEBIProcessingService:
         try:
             # Process the document using the service
             document = JISEBIDocument(bytes)
+
+            # Upload the processed document
+            uploaded_blob = storage.upload_to_gcp(bytes, task_id, "input.docx")
+            cleanup_needed = True
 
             entry = {
                 "user_id": user_id,
@@ -42,6 +47,8 @@ class JISEBIProcessingService:
         except Exception as e:
             if cleanup_needed:
                 try:
+                    if uploaded_blob:
+                        storage.delete_from_gcp(uploaded_blob)
                     db.delete_document(task_id)
                 except Exception as cleanup_error:
                     # Log cleanup error

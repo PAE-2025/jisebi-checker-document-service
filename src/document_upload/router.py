@@ -5,6 +5,7 @@ from src.document_upload.service import JISEBIUploadService
 from src.document_upload.dependencies import get_upload_service
 from typing import Optional
 from src.database import db
+from src.storage import storage
 import io
 import logging
 
@@ -63,22 +64,75 @@ async def complex_operation_endpoint(
     summary="List Uploads",
     description="List Uploads with optional filtering by status."
 )
-async def list_Uploads(
+async def list_uploads(
     request: Request,
     status: Optional[str] = Query(None, description="Filter Uploads by status"),
     skip: int = Query(0, ge=0, description="Number of Uploads to skip"),
     limit: int = Query(100, ge=1, le=1000, description="Maximum number of Uploads to return")
 ):
     """List Uploads with pagination and optional status filtering."""
-    query = {}
+    uid = request.state.user["id"]
+
+    query = {
+        "user_id": uid
+    }
+
     if status:
         query["status"] = status
+
+    try: 
     
-    uploads = db.list_documents(
-        query=query,
-        sort_by="created_at",
-        sort_direction="DESCENDING",  # Descending, newest first
-        limit=limit
-    )
+        uploads = db.list_documents(
+            query=query,
+            sort_by="created_at",
+            sort_direction="DESCENDING",  # Descending, newest first
+            limit=limit
+        )
+    
+    except Exception as e:
+        raise HTTPException(status_code=500, detail="Error fetching history")
   
     return uploads
+
+@router.get(
+    "/download/{task_id}", 
+    # response_model=List[Upload],
+    summary="List Uploads",
+    description="List Uploads with optional filtering by status."
+)
+async def download(
+    request: Request,
+    task_id: str,
+):
+    
+    """List Uploads with pagination and optional status filtering."""
+    uid = request.state.user["id"]
+
+    document = db.get_document(task_id)
+    
+    # Check if document exists
+    if document == None:
+        raise HTTPException(status_code=400, detail="Item not found or unauthorized access")
+
+    # Validate user access
+    if document.get("user_id") != uid:
+        raise HTTPException(status_code=400, detail="Item not found or unauthorized access")
+    
+
+    if document.get("status") != "processed":
+        raise HTTPException(status_code=400, detail="Item is not finished processing")
+    
+    try:
+    
+        reporting = storage.download(f"{task_id}/output.pdf")
+        reporting.seek(0)
+
+        return StreamingResponse(
+            reporting,
+            media_type="application/pdf",
+            headers={"Content-Disposition": "attachment; filename=reporting-result.pdf"}
+        )
+
+    except Exception as e:
+        raise HTTPException(status_code=500, detail="Download failed")
+

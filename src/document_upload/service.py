@@ -15,11 +15,19 @@ class JISEBIUploadService:
         cleanup_needed = False
 
         try:
+
+            if (json == True):
+                document = JISEBIDocument(bytes)
+                evaluation = JISEBIEvaluation(document)
+                report = JISEBIReporting(evaluation)
+                await report.set_report()
+                return report.jisebi_report
+
             # Process the document using the service
             document = JISEBIDocument(bytes)
 
             # Upload the processed document
-            uploaded_blob = storage.upload_to_gcp(bytes, task_id, "input.docx")
+            uploaded_blob = storage.upload(bytes, task_id, "input.docx")
             cleanup_needed = True
 
             entry = {
@@ -32,22 +40,21 @@ class JISEBIUploadService:
 
             doc_ref = db.add_document(data=entry, document_id=task_id)
 
-            #Add Queue
-
+            # Add Queue
             db.update_document(document_id=doc_ref, data={
-                'status': 'queued',
+                'status': 'processed',
             })
 
             return {
                 "task_id": task_id,
-                "status": "queued",
+                "status": "processed",
             }
 
         except Exception as e:
             if cleanup_needed:
                 try:
                     if uploaded_blob:
-                        storage.delete_from_gcp(uploaded_blob)
+                        storage.delete(uploaded_blob)
                     db.delete_document(task_id)
                 except Exception as cleanup_error:
                     # Log cleanup error
@@ -58,12 +65,5 @@ class JISEBIUploadService:
                 'details': str(e)
             }) 
 
-        evaluation = JISEBIEvaluation(document)
-        report = JISEBIReporting(evaluation)
-        if (json == True):
-            await report.set_report()
-            return report.jisebi_report
-        else:
-            return await report.generate_final_report()
         # await report.generate_report()
         # return evaluation.generate_overall_summary()

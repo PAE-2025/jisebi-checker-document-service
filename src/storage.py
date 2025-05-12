@@ -22,7 +22,7 @@ class GoogleStorage:
         return bucket
 
     # Upload a file to a specific folder in the bucket
-    def upload_to_gcp(self, file_content, folder_name: str, file_name: str) -> str:
+    def upload(self, file_content, folder_name: str, file_name: str) -> str:
         """Upload a file to a specific folder in the GCP bucket.
         
         Supports both `bytes` and `IO[bytes]` file content.
@@ -37,9 +37,14 @@ class GoogleStorage:
             raise TypeError("file_content must be an IO[bytes] object")
         
         return blob_path
+    
+    def download(self, file_path):
+        blob = self.bucket.blob(file_path)
+        file_bytes = blob.download_as_bytes()
+        return io.BytesIO(file_bytes)
 
     # Delete a file from the bucket
-    def delete_from_gcp(self, file_path):
+    def delete(self, file_path):
         blob = self.bucket.blob(file_path)
         blob.delete()
 

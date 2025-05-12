@@ -18,7 +18,25 @@ class JISEBIProcessingService:
 
 
         if task_doc:
+
+            file = storage.download(f"{task_id}/input.docx")
+            file.seek(0)
+
             # Process Task
+            document = JISEBIDocument(file)
+            evaluation = JISEBIEvaluation(document)
+            report = JISEBIReporting(evaluation)
+            
+            pdf_report = await report.generate_final_report()
+
+            storage.upload(pdf_report, task_id, "output.pdf")
+
+            db.update_document(document_id=task_id, data={
+                'status': 'processed',
+            })
+
+            storage.delete(f"{task_id}/input.docx")
+           
             return "success"
 
         raise Exception("Cannot find task (incorrect id or already processed)")

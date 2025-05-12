@@ -1,4 +1,4 @@
-from typing import Optional 
+from typing import Any 
 from pydantic_settings import BaseSettings
 from dotenv import load_dotenv
 from functools import lru_cache
@@ -29,7 +29,7 @@ class Settings(BaseSettings):
     STATUS_CANCELLED: str = "cancelled"
 
     # Google Cloud Storage settings
-    GCS_CREDENTIALS_FILE: Optional[str] = None
+    GCS_CREDENTIALS_FILE: Any = None
     GCS_BUCKET_NAME: str
     FIRESTORE_DB_NAME: str
     FIRESTORE_COLLECTION_NAME: str

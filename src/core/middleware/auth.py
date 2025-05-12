@@ -10,6 +10,7 @@ from google.oauth2 import id_token
 from google.auth.transport import requests as google_requests
 
 from src.core.requests.authentication_service import AuthService
+from src.core.config import get_settings
 
 logger = logging.getLogger(__name__)
 
@@ -25,6 +26,7 @@ class AuthenticationMiddleware(BaseHTTPMiddleware):
         super().__init__(app)
         self.auth_service = auth_service
         self.exclude_paths = exclude_paths or ["/docs"]
+        self.audience = get_settings().SELF_URL
     
     async def dispatch(self, request: Request, call_next):
         try:
@@ -46,7 +48,7 @@ class AuthenticationMiddleware(BaseHTTPMiddleware):
                     id_info = id_token.verify_oauth2_token(
                         token,
                         google_requests.Request(),
-                        audience=self.audience
+                        self.audience
                     )
 
                     # Optional: you can also check issuer, email, etc here if desired

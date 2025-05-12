@@ -4,15 +4,13 @@ from fastapi.responses import StreamingResponse, JSONResponse
 from src.document_processing.service import JISEBIProcessingService
 from src.document_processing.dependencies import get_processing_service
 from src.document_processing.models import TaskProcessingRequest
-from typing import Optional
-from src.database import db
-import io
+import src.document_processing.docs as docs
 import logging
 
 logger = logging.getLogger(__name__)
 router = APIRouter()
 
-@router.post("/process-document")
+@router.post("/process-document", **docs.document_processing)
 async def processing_endpoint(
     request: Request, 
     task_data: TaskProcessingRequest,

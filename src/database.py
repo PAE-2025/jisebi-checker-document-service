@@ -3,6 +3,7 @@ import os
 from typing import Any, Dict, List, Optional
 from google.cloud import firestore
 from src.core.config import get_settings
+import datetime
 
 settings = get_settings()
 logger = logging.getLogger(__name__)
@@ -40,7 +41,14 @@ class FirestoreDatabase:
 
         query_ref = query_ref.order_by(sort_by, direction=firestore.Query.DESCENDING if sort_direction == "DESCENDING" else firestore.Query.ASCENDING).limit(limit)
 
-        return [doc.to_dict() for doc in query_ref.stream()]
+        def fix_timestamp(doc_dict):
+            """Convert Firestore timestamps to JSON-serializable format."""
+            for key, value in doc_dict.items():
+                if isinstance(value, datetime.datetime):  # Firestore timestamp
+                    doc_dict[key] = value.isoformat()  # Convert to ISO string
+            return doc_dict
+
+        return [fix_timestamp(doc.to_dict()) for doc in query_ref.stream()]
 
     def add_document(self, data: Dict[str, Any], document_id:str = None) -> str:
         """Add a document to a collection and return the document ID."""

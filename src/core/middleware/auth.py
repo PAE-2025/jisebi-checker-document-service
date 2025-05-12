@@ -107,7 +107,7 @@ class AuthenticationMiddleware(BaseHTTPMiddleware):
                     }
                 )
         except HTTPException as e:
-            return JSONResponse(status_code=e.status_code, content= {"status": False, "message":e.detail})
+            return JSONResponse(status_code=e.status_code, content=e.detail)
         
         # Continue processing the request
         return await call_next(request)

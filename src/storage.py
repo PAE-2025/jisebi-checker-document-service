@@ -3,8 +3,10 @@ from src.core.config import get_settings
 import os
 import io
 
-credentials_path = get_settings().GCS_CREDENTIALS_FILE
-os.environ["GOOGLE_APPLICATION_CREDENTIALS"] = credentials_path
+credentials = os.getenv("GOOGLE_APPLICATION_CREDENTIALS", None)
+if credentials == None:
+    credentials_path = get_settings().GCS_CREDENTIALS_FILE
+    os.environ["GOOGLE_APPLICATION_CREDENTIALS"] = credentials_path
 
 class GoogleStorage:
 

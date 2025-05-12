@@ -1,13 +1,13 @@
 from google.cloud import tasks_v2
-from google.protobuf import timestamp_pb2
-import datetime
+from src.core.config import get_settings
 import json
 
+settings = get_settings()
 client = tasks_v2.CloudTasksClient()
-project = "x-sorter-458402-e1"
-queue = "jisebi-document-processing"
-location = "asia-southeast2"
-url = "placeholder"
+project = settings.GCP_PROJECT_ID
+queue = settings.GCP_TASK_QUEUE
+location = settings.GCP_TASK_LOCATION
+url = settings.SELF_URL
 parent = client.queue_path(project, location, queue)
 
 class CloudTask:

@@ -12,8 +12,8 @@ load_dotenv(env_file)
 
 class Settings(BaseSettings):
     AUTH_SERVICE_URL: str
+    SELF_URL: str
     PLATFORM: str
-    MONGODB_URI: str
     JWT_SECRET: str
 
     # Task processor settings
@@ -33,6 +33,9 @@ class Settings(BaseSettings):
     GCS_CREDENTIALS_FILE: str
     FIRESTORE_DB_NAME: str
     FIRESTORE_COLLECTION_NAME: str
+    GCP_PROJECT_ID: str
+    GCP_TASK_QUEUE: str
+    GCP_TASK_LOCATION: str
 
     class Config:
         env_file = env_file

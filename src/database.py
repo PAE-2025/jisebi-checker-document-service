@@ -7,11 +7,6 @@ from src.core.config import get_settings
 settings = get_settings()
 logger = logging.getLogger(__name__)
 
-credentials = os.getenv("GOOGLE_APPLICATION_CREDENTIALS", None)
-if credentials == None:
-    credentials_path = settings.GCS_CREDENTIALS_FILE
-    os.environ["GOOGLE_APPLICATION_CREDENTIALS"] = credentials_path
-
 class FirestoreDatabase:
     """Firestore database connection manager."""
     

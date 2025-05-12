@@ -49,10 +49,10 @@ async def complex_operation_endpoint(
             
         else:
             reporting = await service.upload_document(user['id'], bytes_io)
-            return StreamingResponse(
-                reporting,
-                media_type="application/pdf",
-                headers={"Content-Disposition": "attachment; filename=reporting-result.pdf"}
+            reporting["success"] = True
+            return JSONResponse(
+                content=reporting,
+                status_code=200
             )
     
     except Exception as e:

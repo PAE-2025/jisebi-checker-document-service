@@ -34,6 +34,7 @@ class Settings(BaseSettings):
     GCP_PROJECT_ID: str
     GCP_TASK_QUEUE: str
     GCP_TASK_LOCATION: str
+    GCP_TASK_SERVICE_ACCOUNT: str
 
     class Config:
         env_file = env_file

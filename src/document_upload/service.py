@@ -5,6 +5,7 @@ from src.document_processing.helpers.jisebi_evaluation import JISEBIEvaluation
 from src.document_processing.helpers.jisebi_reporting import JISEBIReporting
 from src.database import db
 from src.storage import storage
+from src.task import task
 import uuid
 
 class JISEBIUploadService:
@@ -42,12 +43,14 @@ class JISEBIUploadService:
 
             # Add Queue
             db.update_document(document_id=doc_ref, data={
-                'status': 'processed',
+                'status': 'queued',
             })
+
+            task.enqueue_task(task_id)
 
             return {
                 "task_id": task_id,
-                "status": "processed",
+                "status": "queued",
             }
 
         except Exception as e:

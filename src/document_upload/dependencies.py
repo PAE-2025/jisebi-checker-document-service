@@ -1,15 +1,15 @@
 from fastapi import Depends
-from src.document_upload.service import JISEBIProcessingService
+from src.document_upload.service import JISEBIUploadService
 
 # Singleton instance of the analyzer service
-_processing_service = None
+_upload_service = None
 
-def get_processing_service():
+def get_upload_service():
     """
     Dependency to get the analyzer service instance
     Uses a singleton pattern to avoid loading the NLP models multiple times
     """
-    global _processing_service
-    if _processing_service is None:
-        _processing_service = JISEBIProcessingService()
-    return _processing_service
+    global _upload_service
+    if _upload_service is None:
+        _upload_service = JISEBIUploadService()
+    return _upload_service

@@ -1,16 +1,15 @@
 from typing import IO
 import datetime
-from src.document_upload.helpers.jisebi_document import JISEBIDocument
-from src.document_upload.helpers.jisebi_evaluation import JISEBIEvaluation
-from src.document_upload.helpers.jisebi_reporting import JISEBIReporting
+from src.document_processing.helpers.jisebi_document import JISEBIDocument
+from src.document_processing.helpers.jisebi_evaluation import JISEBIEvaluation
+from src.document_processing.helpers.jisebi_reporting import JISEBIReporting
 from src.database import db
 from src.storage import storage
 import uuid
 
-class JISEBIProcessingService:
+class JISEBIUploadService:
 
-    
-    async def process_document(self, user_id:str, bytes:IO[bytes], json:bool=False) -> JISEBIReporting:
+    async def upload_document(self, user_id:str, bytes:IO[bytes], json:bool=False) -> JISEBIReporting:
 
         task_id = str(uuid.uuid4())
         cleanup_needed = False

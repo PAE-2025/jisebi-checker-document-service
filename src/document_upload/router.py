@@ -1,8 +1,8 @@
 
 from fastapi import APIRouter, File, UploadFile, Depends, HTTPException, Request, Query
 from fastapi.responses import StreamingResponse, JSONResponse
-from src.document_upload.service import JISEBIProcessingService
-from src.document_upload.dependencies import get_processing_service
+from src.document_upload.service import JISEBIUploadService
+from src.document_upload.dependencies import get_upload_service
 from typing import Optional
 from src.database import db
 import io
@@ -15,7 +15,7 @@ router = APIRouter()
 async def complex_operation_endpoint(
     request: Request, 
     file: UploadFile = File(...), 
-    service: JISEBIProcessingService = Depends(get_processing_service)
+    service: JISEBIUploadService = Depends(get_upload_service)
     ):
 
     # Validate file type
@@ -37,7 +37,7 @@ async def complex_operation_endpoint(
 
         # Return a specific response based on the 'Accept' header
         if "application/json" in accept_header:
-            reporting = await service.process_document(user['id'], bytes_io, True)
+            reporting = await service.upload_document(user['id'], bytes_io, True)
             return JSONResponse(
                 status_code=200,
                 content={
@@ -47,7 +47,7 @@ async def complex_operation_endpoint(
             )
             
         else:
-            reporting = await service.process_document(user['id'], bytes_io)
+            reporting = await service.upload_document(user['id'], bytes_io)
             return StreamingResponse(
                 reporting,
                 media_type="application/pdf",

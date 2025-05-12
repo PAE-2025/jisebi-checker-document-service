@@ -3,8 +3,8 @@ from typing import IO, Dict
 import xml.etree.ElementTree as ET
 from docx.shared import RGBColor
 from docx.enum.text import WD_COLOR_INDEX
-from src.document_upload.helpers.jisebi_evaluation import JISEBIEvaluation
-from src.document_upload.helpers.jisebi_document import JISEBIDocument
+from src.document_processing.helpers.jisebi_evaluation import JISEBIEvaluation
+from src.document_processing.helpers.jisebi_document import JISEBIDocument
 from files.reporting_template import template_str
 from jinja2 import Template
 from typing import Dict

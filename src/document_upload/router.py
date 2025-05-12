@@ -74,15 +74,11 @@ async def list_Uploads(
     if status:
         query["status"] = status
     
-    uploads = await db.list_documents(
+    uploads = db.list_documents(
         query=query,
         sort_by="created_at",
         sort_direction="DESCENDING",  # Descending, newest first
         limit=limit
     )
-    
-    # Convert _id to id for response
-    for upload in uploads:
-        upload["id"] = str(upload.pop("_id"))
   
     return uploads

@@ -29,8 +29,8 @@ class Settings(BaseSettings):
     STATUS_CANCELLED: str = "cancelled"
 
     # Google Cloud Storage settings
+    GCS_CREDENTIALS_FILE: str = None
     GCS_BUCKET_NAME: str
-    GCS_CREDENTIALS_FILE: str
     FIRESTORE_DB_NAME: str
     FIRESTORE_COLLECTION_NAME: str
     GCP_PROJECT_ID: str

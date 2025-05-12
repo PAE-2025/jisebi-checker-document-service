@@ -62,7 +62,8 @@ app.add_middleware(
 )
 
 # Register Routers
-app.include_router(document_upload_router.router, prefix="/api", tags=["Search"])
+app.include_router(document_upload_router.router, prefix="/api", tags=["Upload"])
+app.include_router(document_processing_router.router, prefix="/internal/api", tags=["Processing"])
 
 @app.get("/redocc")
 async def root():

@@ -50,14 +50,6 @@ app.add_middleware(
 app.include_router(document_upload_router.router, prefix="/api", tags=["Upload"])
 app.include_router(document_processing_router.router, prefix="/internal/api", tags=["Processing"])
 
-@app.options("/{full_path:path}")
-async def preflight_handler(request: Request):
-    response = JSONResponse(content={"message": "Preflight handled"})
-    response.headers["Access-Control-Allow-Origin"] = "*"
-    response.headers["Access-Control-Allow-Methods"] = "GET, POST, OPTIONS"
-    response.headers["Access-Control-Allow-Headers"] = "Authorization, Content-Type"
-    return response
-
 @app.get("/redocc")
 async def root():
     return HTMLResponse(await rendur())

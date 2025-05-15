@@ -65,7 +65,7 @@ class AuthenticationMiddleware(BaseHTTPMiddleware):
             # Extract token from the request
             auth_header = request.headers.get("Authorization")
             if not auth_header:
-                return HTTPException(
+                raise HTTPException(
                     status_code=401,
                     detail= {
                         "status": False,

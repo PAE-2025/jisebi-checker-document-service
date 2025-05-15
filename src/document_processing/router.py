@@ -18,8 +18,6 @@ async def processing_endpoint(
     ):
     if not task_data.task_id:
         raise HTTPException(status_code=400, detail="Task ID is required")
-    
-    print(task_data)
 
     try:
         result = await service.process_document(task_data.task_id)

@@ -391,8 +391,6 @@ class JISEBIReporting:
             randomname = ''.join(random.choices(string.ascii_letters, k=15))
             current_dir = os.getcwd()
 
-            print("here1")
-
             # Convert HTML to PDF
             options = {
                 'page-size': 'Letter'
@@ -400,10 +398,7 @@ class JISEBIReporting:
 
             pdfkit.from_string(await self.generate_dashboard_html(), output_path=f'{current_dir}/files/export/{randomname}-summary.pdf', options=options)
    
-            print("here3")
             await self.generate_report(f'{current_dir}/files/export/{randomname}-report.docx')
-    
-            print("here2")
 
             # Convert DOCX to PDF
 
@@ -414,7 +409,6 @@ class JISEBIReporting:
                 import comtypes.client
                 word = comtypes.client.CreateObject('Word.Application')
                 word.Visible = False
-                print('tes')
                 doc = word.Documents.Open(docx_path)
                 doc.SaveAs(f'{current_dir}/files/export/{randomname}-report.pdf', FileFormat=17) # 17 is PDF format
                 doc.Close()
@@ -435,8 +429,7 @@ class JISEBIReporting:
             with open(f'{current_dir}/files/export/{randomname}-merged.pdf', "rb") as pdf_file:
                 # Read the PDF content
                 pdf_content = pdf_file.read()
-                
-                print("test")
+
                 # Create a BytesIO stream from the content
                 pdf_stream = BytesIO(pdf_content)
                 pdf_stream.seek(0)  # Reset the stream pointer to the beginning

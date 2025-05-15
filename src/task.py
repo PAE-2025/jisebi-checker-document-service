@@ -19,7 +19,6 @@ class CloudTask:
         self.parent       = self.client.queue_path(self.project, self.location, self.queue)
 
     def enqueue_task(self, task_id: str):
-        print("LOGGING: ENQUEUEING")
         payload = json.dumps({"task_id": task_id})
 
         task = {
@@ -34,11 +33,8 @@ class CloudTask:
                 }
             }
         }
-        print("LOGGING: PRE CREATING TASK")
-        print(settings.GCP_TASK_SERVICE_ACCOUNT)
 
         response = self.client.create_task(request={"parent": self.parent, "task": task})
-        print("LOGGING: PRE RETURN")
 
         return (f"Created task {response.name}")
     

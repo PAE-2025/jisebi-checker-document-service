@@ -1,6 +1,6 @@
 import logging
-from fastapi import FastAPI
-from fastapi.responses import HTMLResponse
+from fastapi import FastAPI, Request
+from fastapi.responses import HTMLResponse, JSONResponse
 from src.document_upload import router as document_upload_router
 from src.document_processing import router as document_processing_router
 from src.core.requests.authentication_service import AuthService
@@ -33,8 +33,8 @@ origins = [
 # Allow requests from your frontend (Next.js on localhost:3000)
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=['*'],  # Adjust for production
-    # allow_credentials=True,
+    allow_origins=["http://localhost:3000"],  # Adjust for production
+    allow_credentials=True,
     allow_methods=["*"],  # Allows all HTTP methods
     allow_headers=["*"],  # Allows all headers
 )
@@ -49,6 +49,14 @@ app.add_middleware(
 # Register Routers
 app.include_router(document_upload_router.router, prefix="/api", tags=["Upload"])
 app.include_router(document_processing_router.router, prefix="/internal/api", tags=["Processing"])
+
+@app.options("/{full_path:path}")
+async def preflight_handler(request: Request):
+    response = JSONResponse(content={"message": "Preflight handled"})
+    response.headers["Access-Control-Allow-Origin"] = "*"
+    response.headers["Access-Control-Allow-Methods"] = "GET, POST, OPTIONS"
+    response.headers["Access-Control-Allow-Headers"] = "Authorization, Content-Type"
+    return response
 
 @app.get("/redocc")
 async def root():

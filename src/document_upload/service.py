@@ -24,9 +24,11 @@ class JISEBIUploadService:
                 await report.set_report()
                 return report.jisebi_report
 
+            print("LOGGING: PRE DOC")
             # Process the document using the service
             document = JISEBIDocument(bytes)
-
+            
+            print("LOGGING: PRE BUCKET")
             # Upload the processed document
             uploaded_blob = storage.upload(bytes, task_id, "input.docx")
             cleanup_needed = True
@@ -39,15 +41,19 @@ class JISEBIUploadService:
                 "status": "initializing",
             }
 
+            print("LOGGING: PRE ADD DB")
             doc_ref = db.add_document(data=entry, document_id=task_id)
 
+            print("LOGGING: PRE ENQUE")
+            task.enqueue_task(task_id)
+
+            print("LOGGING: PRE UPDATE")
             # Add Queue
             db.update_document(document_id=doc_ref, data={
                 'status': 'queued',
             })
 
-            task.enqueue_task(task_id)
-
+            print("LOGGING: PRE RETURN")
             return {
                 "task_id": task_id,
                 "status": "queued",

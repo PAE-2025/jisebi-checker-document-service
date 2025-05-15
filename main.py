@@ -26,11 +26,15 @@ app = FastAPI(title="JISEBI Document Processing API", description="Upload docume
 # Create auth service instance
 auth_service = AuthService(settings)
 
+origins = [
+
+]
+
 # Allow requests from your frontend (Next.js on localhost:3000)
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["http://localhost:3000"],  # Adjust for production
-    allow_credentials=True,
+    allow_origins=['*'],  # Adjust for production
+    # allow_credentials=True,
     allow_methods=["*"],  # Allows all HTTP methods
     allow_headers=["*"],  # Allows all headers
 )

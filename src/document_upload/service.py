@@ -31,11 +31,21 @@ class JISEBIUploadService:
             uploaded_blob = storage.upload(bytes, task_id, "input.docx")
             cleanup_needed = True
 
+            if document.title["index"] != -1:
+                title = document.title["content"]
+            else:
+                title = "Title Not Found"
+            
+            if document.authors["index"] != -1:
+                authors = document.authors["authors"]["content"]
+            else:
+                authors = "Title Not Found"
+
             entry = {
                 "user_id": user_id,
                 "task_id": task_id,
-                "title": document.title["content"],
-                "authors": document.authors["authors"]["content"],
+                "title": title,
+                "authors": authors,
                 "status": "initializing",
             }
 

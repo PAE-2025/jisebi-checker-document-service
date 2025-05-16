@@ -405,7 +405,7 @@ class JISEBIDocument:
             return {"index": -1, "message":f"Error extracting {section}: {e}"}
 
     def extract_references(self):
-        # try:
+        try:
             # Get all paragraphs with text
             contents = self.contents
             
@@ -465,15 +465,16 @@ class JISEBIDocument:
                 }
             }
 
-        # except Exception as e:
-        #     return {"index": -1, "message":f"Error extracting References: {e}"}
+        except Exception as e:
+            return {"index": -1, "message": f"Error extracting authors: {e}"}
 
     def check_unidentified(self):
         sections = [ self.title, self.authors, self.abstract, self.introduction, self.method, self.result, self.discussion, self.conclusion, self.references] 
 
         if self.literature_review["index"] != -1:
             sections.append(self.literature_review)
-        ranges = [(section["index"]["first"], section["index"]["last"]) for section in sections]
+
+        ranges = [(section["index"]["first"], section["index"]["last"]) for section in sections if section["index"] != -1]
 
         # Sort ranges by the start index
         ranges.sort(key=lambda x: x[0])
@@ -487,7 +488,7 @@ class JISEBIDocument:
             if current_start > previous_end + 1:
                 # There's a gap between the previous range's end and current range's start
                 gaps.append((previous_end + 1, current_start - 1))
-    
+
         return gaps
 
     def extract_header(self):
@@ -572,10 +573,10 @@ class JISEBIDocument:
 
         # If a match is found, print the captured value
         if font_size_match:
-            font_size = font_name_match.group(1)  # Extract the value of w:ascii
+            font_size = font_size_match.group(1)  # Extract the value of w:ascii
         else:
             font_size = 10
-        
+
         return {
             "name": font_name,
             "size": font_size

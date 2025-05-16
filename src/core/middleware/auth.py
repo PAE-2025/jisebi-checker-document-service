@@ -30,7 +30,7 @@ class AuthenticationMiddleware(BaseHTTPMiddleware):
     
     async def dispatch(self, request: Request, call_next):
         try:
-            
+
             if request.method == "OPTIONS":
                 return await call_next(request)
             
@@ -111,7 +111,12 @@ class AuthenticationMiddleware(BaseHTTPMiddleware):
                     }
                 )
         except HTTPException as e:
-            return JSONResponse(status_code=e.status_code, content=e.detail)
+            response = JSONResponse(status_code=e.status_code, content=e.detail)
+            response.headers["Access-Control-Allow-Origin"] = "*"
+            response.headers["Access-Control-Allow-Credentials"] = True
+            response.headers["Access-Control-Allow-Methods"] = "*"
+            response.headers["Access-Control-Allow-Headers"] = "*"
+            return response
         
         # Continue processing the request
         return await call_next(request)

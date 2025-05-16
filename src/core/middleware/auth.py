@@ -111,11 +111,18 @@ class AuthenticationMiddleware(BaseHTTPMiddleware):
                     }
                 )
         except HTTPException as e:
-            response = JSONResponse(status_code=e.status_code, content=e.detail)
-            response.headers["Access-Control-Allow-Origin"] = "*"
-            response.headers["Access-Control-Allow-Credentials"] = True
-            response.headers["Access-Control-Allow-Methods"] = "*"
-            response.headers["Access-Control-Allow-Headers"] = "*"
+            origins = get_settings().ALLOWED_ORIGINS
+            response = JSONResponse(status_code=e.status_code, 
+                                    content={
+                                        "status": "false",
+                                        "message": e.detail}, 
+                                    headers={
+                                        "Access-Control-Allow-Headers": "access-control-allow-headers,access-control-allow-methods,access-control-allow-origin,authorization",
+                                        "Access-Control-Allow-Origin": origins,
+                                        "Access-Control-Allow-Credentials": "true",
+                                        "Access-Control-Allow-Methods": "*",
+                                        "Access-Control-Allow-Headers": "*",
+                                    })
             return response
         
         # Continue processing the request

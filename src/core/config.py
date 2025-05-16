@@ -36,6 +36,9 @@ class Settings(BaseSettings):
     GCP_TASK_LOCATION: str
     GCP_TASK_SERVICE_ACCOUNT: str
 
+    # CORS
+    ALLOWED_ORIGINS: str
+
     class Config:
         env_file = env_file
         env_file_encoding = 'utf-8'

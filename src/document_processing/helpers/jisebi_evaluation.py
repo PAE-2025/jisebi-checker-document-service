@@ -64,23 +64,25 @@ class JISEBIEvaluation:
             section_object = getattr(document, section)
             if section not in ["authors", "abstract",]:
                 if section_object["index"] == -1:
-                    result[section]["section_issue"].append(f"The {section} cannot be found")
+                    result[section]["section_issue"]["not_found"].append(f"The {section} cannot be found")
             elif section == "authors":
                 if section_object["index"] == -1:
-                    result[section]["section_issue"].append(f"The {section} cannot be found")
+                    result[section]["section_issue"]["not_found"].append(f"The {section} cannot be found")
+                    break
                 if section_object["authors"]["index"] == -1:
-                    result[section]["section_issue"].append(f"The Author(s)'s name cannot be found")
+                    result[section]["section_issue"]["not_found"].append(f"The Author(s)'s name cannot be found")
+                    break
                 if "affiliation" not in section_object["affiliations"]["data"]["1"]:
-                    result[section]["section_issue"].append(f"The Author(s)'s affiliation cannot be found")
+                    result[section]["section_issue"]["not_found"].append(f"The Author(s)'s affiliation cannot be found")
                 if "email" not in section_object["affiliations"]["data"]["1"]:
-                    result[section]["section_issue"].append(f"The Author(s)'s email cannot be found")
+                    result[section]["section_issue"]["not_found"].append(f"The Author(s)'s email cannot be found")
             elif section == "abstract":
                 if section_object["index"] == -1:
-                    result[section]["section_issue"].append(f"The {section} cannot be found")
+                    result[section]["section_issue"]["not_found"].append(f"The {section} cannot be found")
                 abstract_sections = ["background", "objective", "methods", "results", "conclusion", "keywords", "article_history"]
                 for abstract_section in abstract_sections:
                     if "heading" not in section_object["paragraph"][abstract_section]:
-                        result[section]["section_issue"].append(f"The Abstract's {abstract_section} cannot be found")
+                        result[section]["section_issue"]["not_found"].append(f"The Abstract's {abstract_section} cannot be found")
 
         return result
 
@@ -111,8 +113,13 @@ class JISEBIEvaluation:
         # For title, authors, abstract: use the single index value
         # For other sections: use the 'first' value from the index dictionary
         indices = {}
-        for section in expected_order:        
-            indices[section] = getattr(document, section)['index']['first']
+        for section in expected_order:
+            print(getattr(document, section))
+
+            if getattr(document, section)['index'] != -1:
+                print(getattr(document, section))
+
+                indices[section] = getattr(document, section)['index']['first']
         
         # Check if the indices are in ascending order
         for i in range(len(expected_order) - 1):
@@ -152,15 +159,16 @@ class JISEBIEvaluation:
         # Check for inconsistencies in the range sections (first/last values)
         for section in expected_order:
             if section not in ['title', 'authors', 'abstract'] and section in dir(document):
-                first = getattr(document, section)['index']['first']
-                last = getattr(document, section)['index']['last']
+                if getattr(document, section)['index'] != -1:
+                    first = getattr(document, section)['index']['first']
+                    last = getattr(document, section)['index']['last']
                 
-                # Check if first page is after last page
-                if first > last:
-                    if 'flag' not in result[section]:
-                        result[section]["section_issue"]["sequence"].append(f"First page ({first}) is after last page ({last})")
-                    else:
-                        result[section]["section_issue"]["sequence"].append(f", first page ({first}) is after last page ({last})")
+                    # Check if first page is after last page
+                    if first > last:
+                        if 'flag' not in result[section]:
+                            result[section]["section_issue"]["sequence"].append(f"First page ({first}) is after last page ({last})")
+                        else:
+                            result[section]["section_issue"]["sequence"].append(f", first page ({first}) is after last page ({last})")
         
         result = {key: value for key, value in result.items() if value != ""}
         return result

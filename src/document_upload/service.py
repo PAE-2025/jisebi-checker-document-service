@@ -93,6 +93,7 @@ class JISEBIUploadService:
             blob = storage.bucket.blob(f'{task_id}/input.docx')
 
             url = blob.generate_signed_url(
+                version="v4",
                 expiration=datetime.timedelta(minutes=15),
                 method="GET"
             )

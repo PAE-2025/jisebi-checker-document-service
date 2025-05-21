@@ -6,6 +6,7 @@ from src.document_processing.helpers.jisebi_reporting import JISEBIReporting
 from src.database import db
 from src.storage import storage
 from src.task import task
+from google import auth
 import re
 import uuid
 
@@ -92,11 +93,19 @@ class JISEBIUploadService:
 
             blob = storage.bucket.blob(f'{task_id}/input.docx')
 
-            url = blob.generate_signed_url(
-                version="v4",
-                expiration=datetime.timedelta(minutes=15),
-                method="GET"
-            )
+            credentials, project_id = auth.default(scopes=['https://www.googleapis.com/auth/cloud-platform'])
+            credentials.refresh(auth.transport.requests.Request())
+
+            if hasattr(credentials, "service_account_email"):
+
+                url = blob.generate_signed_url(
+                    version="v4",
+                    response_disposition="inline",
+                    service_account_email=credentials.service_account_email,
+                    access_token=credentials.token,
+                    expiration=datetime.timedelta(minutes=15),
+                    method="GET"
+                )
 
             entry["url"] = url
             entry.pop("created_at", None)

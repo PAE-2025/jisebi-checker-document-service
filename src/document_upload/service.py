@@ -6,11 +6,34 @@ from src.document_processing.helpers.jisebi_reporting import JISEBIReporting
 from src.database import db
 from src.storage import storage
 from src.task import task
+import re
 import uuid
+
+# Helper
+def parse_author_name(author_string):
+    # Check for numbered author format: "First Author 1) , Second Author 2) , Third Author 3)"
+    if re.search(r'\d\)', author_string):
+        first_author = author_string.split(',')[0]  # Take only the first author
+        first_author = re.sub(r'\s*\d\)', '', first_author).strip()  # Remove numbering like "1)"
+
+    else:
+        first_author = author_string.strip()
+
+    # Handle cases where names are not in the usual "First Last" format
+    name_parts = first_author.split()
+
+    if len(name_parts) > 1:
+        first_name = name_parts[0]
+        last_name = " ".join(name_parts[1:])
+    else:
+        first_name = name_parts[0]
+        last_name = ""
+    
+    return {"first_name": first_name, "last_name": last_name}
 
 class JISEBIUploadService:
 
-    async def upload_document(self, user_id:str, bytes:IO[bytes], json:bool=False) -> JISEBIReporting:
+    async def upload_document(self, user_id:str, bytes:IO[bytes], json:bool=False):
 
         task_id = str(uuid.uuid4())
         cleanup_needed = False
@@ -55,13 +78,29 @@ class JISEBIUploadService:
 
             # Add Queue
             db.update_document(document_id=doc_ref, data={
-                'status': 'queued',
+                'status': 'awaiting',
             })
 
-            return {
-                "task_id": task_id,
-                "status": "queued",
+            entry["status"] = 'awaiting'
+
+            author_name = parse_author_name(authors)
+
+            entry["authors"] = {
+                "text": authors,
+                "first_author": author_name
             }
+
+            blob = storage.bucket.blob(f'{task_id}/input.docx')
+
+            url = blob.generate_signed_url(
+                expiration=datetime.timedelta(minutes=15),
+                method="GET"
+            )
+
+            entry["url"] = url
+            entry.pop("created_at", None)
+            entry.pop("updated_at", None)
+            return entry
 
         except Exception as e:
             if cleanup_needed:
@@ -80,3 +119,94 @@ class JISEBIUploadService:
 
         # await report.generate_report()
         # return evaluation.generate_overall_summary()
+
+    async def update_queue(self, user_id:str, task_id:str):
+
+            try:
+
+                document = db.get_document(task_id)
+        
+                # Check if document exists
+                if document == None:
+                    return {
+                        "status": False,
+                        "message":"Item not found or unauthorized access"
+                    }
+
+                # Validate user access
+                if document.get("user_id") != user_id:
+                    return {
+                        "status": False,
+                        "message": "Item not found or unauthorized access"
+                    }
+
+                
+                if document.get("status") != "awaiting":
+                    return {
+                        "status": False,
+                        "message":"Item is not awaiting"
+                    }
+
+                task.enqueue_task(task_id)
+
+                # Add Queue
+                db.update_document(document_id=task_id, data={
+                    'status': 'queued',
+                })
+
+                return {
+                    "status": True
+                }
+
+            except Exception as e:
+                raise Exception({
+                    'error': 'Failed to enqueu document',
+                    'details': str(e)
+                }) 
+
+            # await report.generate_report()
+            # return evaluation.generate_overall_summary()
+
+    async def delete_document(self, user_id:str, task_id:str):
+
+            try:
+
+                document = db.get_document(task_id)
+        
+                # Check if document exists
+                if document == None:
+                    return {
+                        "status": False,
+                        "message":"Item not found or unauthorized access"
+                    }
+
+                # Validate user access
+                if document.get("user_id") != user_id:
+                    return {
+                        "status": False,
+                        "message": "Item not found or unauthorized access"
+                    }
+
+                
+                if document.get("status") != "awaiting":
+                    return {
+                        "status": False,
+                        "message":"Item is not awaiting"
+                    }
+
+                storage.delete(task_id)
+
+                db.delete_document(document_id=task_id)
+
+                return {
+                    "status": True
+                }
+
+            except Exception as e:
+                raise Exception({
+                    'error': 'Failed to delete document',
+                    'details': str(e)
+                }) 
+
+            # await report.generate_report()
+            # return evaluation.generate_overall_summary()

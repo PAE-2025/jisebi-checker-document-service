@@ -13,59 +13,11 @@ import src.document_upload.docs as docs
 logger = logging.getLogger(__name__)
 router = APIRouter()
 
-@router.post(
-    "/upload",
-    **docs.upload_docs
-    )
-async def upload_endpoint(
-    request: Request, 
-    file: UploadFile = File(...), 
-    service: JISEBIUploadService = Depends(get_upload_service)
-    ):
-
-    # Validate file type
-    if not file.filename.endswith('.docx'):
-        raise HTTPException(
-            status_code=422, 
-            detail="Invalid file format. Only DOCX files are supported."
-        )
-    
-    contents = await file.read()
-    bytes_io = io.BytesIO(contents)
-
-    try:
-        
-        accept_header = request.headers.get("accept")
-
-        user = request.state.user
-
-        # Return a specific response based on the 'Accept' header
-        if "application/json" in accept_header:
-            reporting = await service.upload_document(user['id'], bytes_io, True)
-            return JSONResponse(
-                status_code=200,
-                content={
-                    "status": True,
-                    "data": reporting
-                }
-            )
-            
-        else:
-            reporting = await service.upload_document(user['id'], bytes_io)
-            reporting["success"] = True
-            return JSONResponse(
-                content=reporting,
-                status_code=200
-            )
-    
-    except Exception as e:
-        raise HTTPException(status_code=500, detail=f"Error processing document: {str(e)}")
-
 @router.get(
     "/upload", 
     **docs.upload_list
 )
-async def list_uploads(
+async def index(
     request: Request,
     status: Optional[Literal["queued", "processed"]] = Query(None, description="Filter Uploads by status"),
     limit: Optional[int] = Query(100, ge=1, le=1000, description="Maximum number of Uploads to return")
@@ -102,6 +54,104 @@ async def list_uploads(
         }
     )
 
+@router.post(
+    "/upload",
+    **docs.upload_docs
+    )
+async def create_upload(
+    request: Request, 
+    file: UploadFile = File(...), 
+    service: JISEBIUploadService = Depends(get_upload_service)
+    ):
+
+    # Validate file type
+    if not file.filename.endswith('.docx'):
+        raise HTTPException(
+            status_code=422, 
+            detail="Invalid file format. Only DOCX files are supported."
+        )
+    
+    contents = await file.read()
+    bytes_io = io.BytesIO(contents)
+
+    try:
+        
+        accept_header = request.headers.get("accept")
+
+        user = request.state.user
+
+        # Return a specific response based on the 'Accept' header
+        if "application/json" in accept_header:
+            reporting = await service.upload_document(user['id'], bytes_io, True)
+            return JSONResponse(
+                status_code=200,
+                content={
+                    "status": True,
+                    "data": reporting
+                }
+            )
+            
+        else:
+
+            reporting = await service.upload_document(user['id'], bytes_io)
+  
+            reporting["success"] = True
+            return JSONResponse(
+                content= {
+                    "status": True,
+                    "data": reporting
+                },
+                status_code=200
+            )
+    
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Error processing document: {str(e)}")
+    
+@router.put(
+    "/upload/{task_id}",
+    **docs.update_upload
+    )
+async def update_upload(
+    request: Request, 
+    task_id: str,
+    service: JISEBIUploadService = Depends(get_upload_service)
+    ):
+
+    try:
+        user_id = request.state.user["id"]
+        result = await service.update_queue(user_id, task_id)
+
+        return JSONResponse(
+            content=result,
+            status_code=200
+        )
+    
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Error processing document: {str(e)}")
+    
+@router.delete(
+    "/upload/{task_id}",
+    **docs.delete_upload
+    )
+async def delete_upload(
+    request: Request, 
+    task_id: str,
+    service: JISEBIUploadService = Depends(get_upload_service)
+    ):
+
+    try:
+        user_id = request.state.user["id"]
+        result = await service.delete_document(user_id, task_id)
+
+        return JSONResponse(
+            content=result,
+            status_code=200
+        )
+    
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Error processing document: {str(e)}")
+    
+
 @router.get(
     "/download/{task_id}", 
     **docs.download
@@ -118,7 +168,7 @@ async def download(
     
     # Check if document exists
     if document == None:
-        raise JSONResponse(status_code=400, content={
+        return JSONResponse(status_code=400, content={
             "status": False,
             "message":"Item not found or unauthorized access"
             }
@@ -126,7 +176,7 @@ async def download(
 
     # Validate user access
     if document.get("user_id") != uid:
-        raise JSONResponse(status_code=400, content={
+        return JSONResponse(status_code=400, content={
             "status": False,
             "message": "Item not found or unauthorized access"
             }
@@ -156,4 +206,3 @@ async def download(
             "status": False,
             "message": "Download failed" 
         })
-

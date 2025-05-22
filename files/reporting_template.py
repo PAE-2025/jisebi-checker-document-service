@@ -187,11 +187,15 @@ template_str = """
 
                 {% if (data[section]["body"] != {} and "body" in data[section]) or (data[section]["heading"] != {} and "heading" in data[section]) %}
                     <span class="status-tag status-error"> {{ data[section]["body"] | length + data[section]["heading"] | length}} Style Issues</span>
+                {% endif %}
+
+                {% if data[section]["section_issue"]["not_found"] != [] %}
+                    <span class="status-tag status-error"> Missing </span>
                 {% endif %} 
 
             </div>
             <div class="section-body">
-                {% if "body" in data[section] and "heading" in data[section] %}
+                {% if ("body" in data[section] and "heading" in data[section]) or section == "title" %}
                     {% if data["result"]["section_issue"]["not_found"] == [] and data["result"]["section_issue"]["sequence"] == [] and data[section]["body"] == {} and data[section]["heading"] == {} %}
                         <p>This section has proper formatting and sequence. </p>
                     {% else %}  

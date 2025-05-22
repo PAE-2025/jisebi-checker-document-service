@@ -62,16 +62,15 @@ class JISEBIEvaluation:
         
         for section in sections:
             section_object = getattr(document, section)
-            if section not in ["authors", "abstract",]:
+            if section not in ["authors", "abstract"]:
                 if section_object["index"] == -1:
                     result[section]["section_issue"]["not_found"].append(f"The {section} cannot be found")
             elif section == "authors":
                 if section_object["index"] == -1:
                     result[section]["section_issue"]["not_found"].append(f"The {section} cannot be found")
-                    break
+                    continue
                 if section_object["authors"]["index"] == -1:
                     result[section]["section_issue"]["not_found"].append(f"The Author(s)'s name cannot be found")
-                    break
                 if "affiliation" not in section_object["affiliations"]["data"]["1"]:
                     result[section]["section_issue"]["not_found"].append(f"The Author(s)'s affiliation cannot be found")
                 if "email" not in section_object["affiliations"]["data"]["1"]:
@@ -79,6 +78,7 @@ class JISEBIEvaluation:
             elif section == "abstract":
                 if section_object["index"] == -1:
                     result[section]["section_issue"]["not_found"].append(f"The {section} cannot be found")
+                    continue
                 abstract_sections = ["background", "objective", "methods", "results", "conclusion", "keywords", "article_history"]
                 for abstract_section in abstract_sections:
                     if "heading" not in section_object["paragraph"][abstract_section]:
@@ -202,7 +202,7 @@ class JISEBIEvaluation:
                 continue
 
             if section == "title":
-                result["title"] = (self.check_paragraph_font(section_object["object"], "Times New Roman", 18, True, None, "JISEBI Title"))
+                result["title"]["body"] = (self.check_paragraph_font(section_object["object"], "Times New Roman", 18, True, None, "JISEBI Title"))
            
             elif section == "authors":
 

@@ -6,6 +6,8 @@ from src.document_processing.dependencies import get_processing_service
 from src.document_processing.models import TaskProcessingRequest
 import src.document_processing.docs as docs
 import logging
+import json
+import traceback
 
 logger = logging.getLogger(__name__)
 router = APIRouter()
@@ -26,7 +28,10 @@ async def processing_endpoint(
         return JSONResponse(
             content= {
                 "status": False,
-                "message": str(e)
+                "message": json.loads(json.dumps({
+                    "error": str(e),
+                    "type": type(e).__name__
+                }))
             },
             status_code=422
         )

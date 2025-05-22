@@ -41,27 +41,27 @@ class AuthenticationMiddleware(BaseHTTPMiddleware):
             if request.url.path.startswith("/internal"):
                 # Optionally verify Google OIDC token
                 auth_header = request.headers.get("Authorization")
-                if not auth_header or not auth_header.startswith("Bearer "):
-                    raise HTTPException(status_code=401, detail="Missing or invalid authorization header for internal task")
+                # if not auth_header or not auth_header.startswith("Bearer "):
+                #     raise HTTPException(status_code=401, detail="Missing or invalid authorization header for internal task")
 
-                token = auth_header.split(" ")[1]
+                # token = auth_header.split(" ")[1]
 
-                # return await call_next(request)
+                # # return await call_next(request)
 
-                try:
-                    id_info = id_token.verify_oauth2_token(
-                        token,
-                        google_requests.Request(),
-                        self.audience
-                    )
+                # try:
+                #     id_info = id_token.verify_oauth2_token(
+                #         token,
+                #         google_requests.Request(),
+                #         self.audience
+                #     )
 
-                    # Optional: you can also check issuer, email, etc here if desired
-                    # if id_info["email"] != "expected-service-account@project.iam.gserviceaccount.com":
-                    #     raise HTTPException(status_code=403, detail="Unauthorized internal task source")
+                #     # Optional: you can also check issuer, email, etc here if desired
+                #     # if id_info["email"] != "expected-service-account@project.iam.gserviceaccount.com":
+                #     #     raise HTTPException(status_code=403, detail="Unauthorized internal task source")
 
-                except Exception as e:
-                    print(f"OIDC token verification failed: {e}")
-                    raise HTTPException(status_code=403, detail="Invalid internal task identity")
+                # except Exception as e:
+                #     print(f"OIDC token verification failed: {e}")
+                #     raise HTTPException(status_code=403, detail="Invalid internal task identity")
 
                 # All good, continue processing
                 return await call_next(request)

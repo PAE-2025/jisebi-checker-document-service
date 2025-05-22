@@ -197,7 +197,10 @@ class JISEBIEvaluation:
         for i, section in enumerate(sections):
             section_report = []
             section_object = getattr(self.jisebi_document, section)
-            
+
+            if section_object["index"] == -1:
+                continue
+
             if section == "title":
                 result["title"] = (self.check_paragraph_font(section_object["object"], "Times New Roman", 18, True, None, "JISEBI Title"))
            
@@ -212,7 +215,7 @@ class JISEBIEvaluation:
                 # Checking the Authors
                 result["authors"]["authors"] = (self.check_paragraph_font(section_object["authors"]["object"], "Times New Roman", 11, True, None, style="JISEBI Author Name"))
                 
-                # Checking the Affiliations of the Authors
+                # Checking the Affiliations of the Authors  
                 for key, value in section_object["affiliations"]["data"].items():
                     result["authors"]["affiliations"][key] = (self.check_paragraph_font(value["affiliation"]["object"], "Times New Roman", 9, False, True, style="JISEBI Author Affiliation"))
                     result["authors"]["emails"][key] = (self.check_paragraph_font(value["email"]["object"], "Times New Roman", 8, False, False, style="JISEBI Author Email"))
@@ -451,7 +454,7 @@ class JISEBIEvaluation:
                         run_issue["italic"] = (f"Italic is {actual_font_italic} instead of {italic}")
                 elif run.italic != italic:
                     run_issue["italic"] = (f"Italic is {run.italic} instead of {italic}")
-            
+
             if run_issue != {}:
                 run_issues.append({
                     "run_index": run_idx,

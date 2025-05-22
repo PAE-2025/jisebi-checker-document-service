@@ -205,7 +205,9 @@ class JISEBIReporting:
 
         for key, data in report.items():
             # paragraph = document.introduction["object"][key]
-            
+            if key == 'literature_review':
+                continue
+
             if data['section_issue']['sequence'] != []:
                 obj_index = getattr(document, key)["index"]["first"]
                 paragraph_start = 0
@@ -389,7 +391,7 @@ class JISEBIReporting:
         try:
             settings: Settings = get_settings()
             randomname = ''.join(random.choices(string.ascii_letters, k=15))
-            current_dir = os.getcwd()
+            current_dir = os.getcwd().replace("\\", "/")
 
             # Convert HTML to PDF
             options = {
@@ -398,7 +400,10 @@ class JISEBIReporting:
 
             pdfkit.from_string(await self.generate_dashboard_html(), output_path=f'{current_dir}/files/export/{randomname}-summary.pdf', options=options)
    
-            await self.generate_report(f'{current_dir}/files/export/{randomname}-report.docx')
+            docx_response = await self.generate_report(f'{current_dir}/files/export/{randomname}-report.docx')
+
+            if docx_response != "exported":
+                raise Exception("Failed generating docx")
 
             # Convert DOCX to PDF
 
@@ -439,7 +444,7 @@ class JISEBIReporting:
                 try:
                     if os.path.exists(f'{current_dir}/files/export/{randomname}-{type}'):
                         os.remove(f'{current_dir}/files/export/{randomname}-{type}')
-                        print(f"{f'files/export/{randomname}-merged.pdf'} has been deleted.")
+                        print(f"{f'{current_dir}/files/export/{randomname}-{type}'} has been deleted.")
                 except Exception as e:
                     print(e)
 
@@ -451,10 +456,13 @@ class JISEBIReporting:
                 try:
                     if os.path.exists(f'{current_dir}/files/export/{randomname}-{type}'):
                         os.remove(f'{current_dir}/files/export/{randomname}-{type}')
-                        print(f"{f'files/export/{randomname}-merged.pdf'} has been deleted.")
+                        print(f"{f'{current_dir}/files/export/{randomname}-{type}'} has been deleted.")
                 except Exception as e:
                     print(e)
-            raise e
+            raise Exception({
+                "failure": "Failed generating final report",
+                "detail": e
+            })
 
 # TO BE REMOVED - FOR TESTING PURPOSES
 async def rendur():

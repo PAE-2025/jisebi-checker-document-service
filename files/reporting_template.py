@@ -224,6 +224,14 @@ template_str = """
     {% endfor %}
     </div>
 
+    <div>
+        {{ data["novelty"] }}
+    </div>
+
+    <div>
+        {{ data["semantic"] }}
+    </div>
+
     <script>
         // Calculate actual statistics
         document.addEventListener('DOMContentLoaded', function() {

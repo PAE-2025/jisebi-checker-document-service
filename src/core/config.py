@@ -11,6 +11,7 @@ load_dotenv(env_file)
 
 class Settings(BaseSettings):
     AUTH_SERVICE_URL: str
+    SEMANTIC_CHECKING_SERVICE_URL: str
     SELF_URL: str
     PLATFORM: str
     JWT_SECRET: str

@@ -7,21 +7,47 @@ from docx.shared import RGBColor
 from docx.enum.text import WD_COLOR_INDEX
 from copy import deepcopy
 from src.document_processing.helpers.jisebi_document import JISEBIDocument
+from src.core.requests.semantic_checking_service import SemanticCheckingService
 import asyncio
+semantic = SemanticCheckingService()
 
+def stringify(string_list):
+    if isinstance(string_list, list) and all(isinstance(item, str) for item in string_list):
+        return "\n".join(filter(None, string_list))
+    return string_list  # Return unchanged if not a list of strings
 class JISEBIEvaluation:
 
     def __init__(self, document:JISEBIDocument):
         self.jisebi_document:JISEBIDocument  = document  # Initialize the variable with the given value
 
+
     async def generate_overall_summary(self):
         
-        result1, result2, result3 = await asyncio.gather(
+        result1, result2, result3, novelty, discon, ner, grammar = await asyncio.gather(
             self.sections_exist(), 
             self.sections_order(), 
-            self.check_document_font()
+            self.check_document_font(),
+            self.check_novelty_condition(),
+            self.check_discon(),
+            self.check_ner(),
+            self.check_grammar(),
         )
-        return self.merge_reports(self.merge_reports(result1, result2), result3)
+
+        print(novelty)
+        print(discon)
+        print(ner)
+        print(grammar)
+
+        merged_reports = self.merge_reports(self.merge_reports(result1, result2), result3)
+        merged_reports["semantic"] = {
+            "novelty": novelty,
+            "discussion_conclusion": discon,
+            "ner": ner,
+            "grammar": grammar
+        }
+        merged_reports["novelty"] = novelty
+    
+        return merged_reports
 
     def merge_reports(self, dict1:dict, dict2:dict):
         """
@@ -40,6 +66,37 @@ class JISEBIEvaluation:
                 result[key] = value
                 
         return result
+    
+    async def check_novelty_condition(self):
+        if self.jisebi_document.title["index"] == -1 or self.jisebi_document.abstract["index"] == -1:
+            return None
+        else:
+            return await semantic.check_novelty(
+                stringify(self.jisebi_document.title["content"]), 
+                stringify(self.jisebi_document.abstract["paragraph"]["content"])
+            )
+    
+    async def check_discon(self):
+        if self.jisebi_document.discussion["index"] == -1 or self.jisebi_document.conclusion["index"] == -1:
+            return None
+        else:
+            return await semantic.check_discon(
+                stringify(self.jisebi_document.discussion["paragraph"]["content"]), 
+                stringify(self.jisebi_document.conclusion["paragraph"]["content"])
+            )
+        
+    async def check_ner(self):
+        if self.jisebi_document.title["index"] == -1:
+            return None
+        else:
+            return await semantic.check_ner(stringify(self.jisebi_document.title["content"]))
+        
+    async def check_grammar(self):
+        if self.jisebi_document.title["index"] == -1:
+            return None
+        else:
+            return await semantic.check_grammar(stringify(self.jisebi_document.title["content"]))
+
 
     async def sections_exist(self):
 
@@ -114,10 +171,8 @@ class JISEBIEvaluation:
         # For other sections: use the 'first' value from the index dictionary
         indices = {}
         for section in expected_order:
-            print(getattr(document, section))
 
             if getattr(document, section)['index'] != -1:
-                print(getattr(document, section))
 
                 indices[section] = getattr(document, section)['index']['first']
         

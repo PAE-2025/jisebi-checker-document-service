@@ -314,6 +314,8 @@ class JISEBIReporting:
             }
             
             # Check section level issues
+            if section_name == "semantic" or section_name == "novelty":
+                continue
             if "section_issue" in section_data:
                 if "not_found" in section_data["section_issue"] and section_data["section_issue"]["not_found"]:
                     section_issues["not_found"] = section_data["section_issue"]["not_found"]
@@ -485,15 +487,16 @@ async def rendur():
     
     # Replace the now tag with actual datetime for demonstration
     current_time = datetime.now().strftime('%Y-%m-%d %H:%M:%S')
-    
-    # Render the template with the data
+
     html = template.render(
-        title="Paper Title",
+        title = "Paper Title",
         current_time="2025-04-23 22:42:27",
         total_issues=8,
-        sections_with_sequence_issues=2,
-        sections_with_not_found_issues=0,
+        sections_with_issues=2,
+        sections_with_sequence_issues=0,
+        sections_with_not_found_issues=1,
         sections_with_style_issues=1,
+        sections=["title", "authors", "abstract", "introduction", "method", "literature_review", "result", "discussion", "conclusion", "references"],
         data = {
             "title": {
                 "section_issue": {
@@ -646,11 +649,13 @@ async def rendur():
                 },
                 "heading": {},
                 "body": {}
+            },
+            "novelty": {
+                "something": "something"
             }
         }
+
     )
+        
 
-    # paper title, current time, section with issues, sequence issues, styling issues, missing sections, 
-
-    
     return html

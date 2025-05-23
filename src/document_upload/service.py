@@ -63,7 +63,7 @@ class JISEBIUploadService:
             if document.authors["index"] != -1:
                 authors = document.authors["authors"]["content"]
             else:
-                authors = "Title Not Found"
+                authors = "Author Not Found"
 
             entry = {
                 "user_id": user_id,

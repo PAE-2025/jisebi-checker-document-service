@@ -38,7 +38,7 @@ class JISEBIEvaluation:
         print(ner)
         print(grammar)
 
-        merged_reports = self.merge_reports(self.merge_reports(result1, result2), result3)
+        merged_reports = self.merge_reports(self.merge_reports(self.merge_reports(result1, result2), result3), discon)
         merged_reports["semantic"] = {
             "novelty": novelty,
             "discussion_conclusion": discon,
@@ -78,12 +78,34 @@ class JISEBIEvaluation:
     
     async def check_discon(self):
         if self.jisebi_document.discussion["index"] == -1 or self.jisebi_document.conclusion["index"] == -1:
-            return None
+            return {}
         else:
-            return await semantic.check_discon(
+
+            result = {
+                "discussion": {
+                    "section_issue": {
+                        "semantic": {}
+                    }
+                },
+                "conclusion": {
+                    "section_issue": {
+                        "semantic": {}
+                    }
+                }
+            }
+
+            response = await semantic.check_discon(
                 stringify(self.jisebi_document.discussion["paragraph"]["content"]), 
                 stringify(self.jisebi_document.conclusion["paragraph"]["content"])
             )
+
+            if response["has_comparison"] == False:
+                result["discussion"]["section_issue"]["semantic"] = "The section does not indicate any comparison"
+            if response["has_contribution"] == False:
+                result["conclusion"]["section_issue"]["semantic"] = "The section does not indicate any contribution statement"
+
+            return result
+
         
     async def check_ner(self):
         if self.jisebi_document.title["index"] == -1:

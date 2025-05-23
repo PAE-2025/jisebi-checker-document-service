@@ -192,29 +192,46 @@ template_str = """
                 {% if data[section]["section_issue"]["not_found"] != [] %}
                     <span class="status-tag status-error"> Missing </span>
                 {% endif %} 
+                
+                {% if "semantic" in data[section]["section_issue"] %}
+                    {% if data[section]["section_issue"]["semantic"] != {} %}
+                        <span class="status-tag status-error"> Semantic Error </span>
+                    {% endif %} 
+                {% endif %}
 
             </div>
             <div class="section-body">
                 {% if ("body" in data[section] and "heading" in data[section]) or section == "title" %}
-                    {% if data["result"]["section_issue"]["not_found"] == [] and data["result"]["section_issue"]["sequence"] == [] and data[section]["body"] == {} and data[section]["heading"] == {} %}
+                    {% if data[section]["section_issue"]["not_found"] == [] and data[section]["section_issue"]["sequence"] == [] and data[section]["body"] == {} and data[section]["heading"] == {} %}
                         <p>This section has proper formatting and sequence. </p>
                     {% else %}  
                         <p>Multiple paragraphs in this section have incorrect styling.</p>
+                        {% for key, value in data[section]["body"].items() %}
+                            
+                            <div class="reference-item">
+                                <strong>Paragraph {{key}}:</strong> 
+                                    {% if value["paragraph_issues"] != {} %}
+                                        {{value["paragraph_issues"]["style"]}} &nbsp;
+                                    {% endif %}
+                                    {% if value["run_issues"] != [] %}
+                                        Make sure the font size, bold, and italic is correct
+                                    {% endif %}
+                            </div>
+                        {% endfor %}
+                    {% endif %}
+                    
+                    {% if "semantic" in data[section]["section_issue"] %}
+                        {% if data[section]["section_issue"]["semantic"] != {} %}
+                            <p>This section has semantic errors</p>
+                                
+                            <div class="reference-item">
+                                <strong>Semantic Error:</strong> 
+                                    {{ data[section]["section_issue"]["semantic"] }}
+                            </div>
+
+                        {% endif %}
                     {% endif %}
 
-                    {% for key, value in data[section]["body"].items() %}
-                        
-                        <div class="reference-item">
-                            <strong>Paragraph {{key}}:</strong> 
-                                {% if value["paragraph_issues"] != {} %}
-                                    {{value["paragraph_issues"]["style"]}} &nbsp;
-                                {% endif %}
-                                {% if value["run_issues"] != [] %}
-                                    Make sure the font size, bold, and italic is correct
-                                {% endif %}
-                        </div>
-
-                    {% endfor %}
                 {% else %} <!-- WIP -->
                     <p>This section has proper formatting and sequence. </p>
                 {% endif %}

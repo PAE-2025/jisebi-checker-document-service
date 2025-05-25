@@ -12,6 +12,7 @@ from datetime import datetime
 import pdfkit
 from PyPDF2 import PdfMerger
 import random
+import traceback
 import string
 import os
 from src.core.config import get_settings, Settings
@@ -205,9 +206,9 @@ class JISEBIReporting:
 
         for key, data in report.items():
             # paragraph = document.introduction["object"][key]
-            if key == 'literature_review':
+            if key == 'semantic' or key == 'novelty':
                 continue
-
+                
             if data['section_issue']['sequence'] != []:
                 obj_index = getattr(document, key)["index"]["first"]
                 paragraph_start = 0
@@ -453,6 +454,7 @@ class JISEBIReporting:
             return pdf_stream
         
         except Exception as e:
+            traceback.print_exc()
             files = ["report.pdf", "report.docx", "summary.pdf", "merged.pdf"]
             for type in files:
                 try:

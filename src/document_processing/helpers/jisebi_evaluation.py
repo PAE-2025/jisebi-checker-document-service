@@ -179,6 +179,7 @@ class JISEBIEvaluation:
             "discussion": {"section_issue": {"sequence": []}},
             "conclusion":{"section_issue": {"sequence": []}},
             "references": {"section_issue": {"sequence": []}},
+            "literature_review": {"section_issue": {"sequence": []}},
         }
 
         # Define the expected order of document sections
@@ -261,6 +262,7 @@ class JISEBIEvaluation:
             'discussion': {"heading": {}, "body": {}}, 
             'conclusion': {"heading": {}, "body": {}}, 
             'references': {"heading": {}, "body": {}}, 
+            'literature_review': {"heading": {}, "body": {}}, 
         }
         # Define the expected order of document sections
     

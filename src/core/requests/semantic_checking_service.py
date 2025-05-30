@@ -54,13 +54,13 @@ class SemanticCheckingService:
             "conclusion": conclusion
         })
     
-    async def check_ner(self, text:str):
+    async def check_ner(self, text:Union[List[str], str]):
         return await self.post_request('api/ner/analyze', {
             "text": text
         })
     
     async def check_grammar(self, texts: Union[List[str], str]):
-        return await self.post_request('api/grammar/process-text/', {
+        return await self.post_request('api/grammar/process-text', {
             "text": texts
         })
           

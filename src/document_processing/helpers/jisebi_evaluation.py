@@ -38,11 +38,8 @@ class JISEBIEvaluation:
         print(ner)
         print(grammar)
 
-        merged_reports = self.merge_reports(self.merge_reports(self.merge_reports(result1, result2), result3), discon)
+        merged_reports = self.merge_reports(self.merge_reports(self.merge_reports(self.merge_reports(result1, result2), result3), discon), ner)
         merged_reports["semantic"] = {
-            "novelty": novelty,
-            "discussion_conclusion": discon,
-            "ner": ner,
             "grammar": grammar
         }
         merged_reports["novelty"] = novelty
@@ -52,8 +49,16 @@ class JISEBIEvaluation:
     def merge_reports(self, dict1:dict, dict2:dict):
         """
         Recursively merge two dictionaries, including nested dictionaries.
-        Values in dict2 will override dict1 if there are conflicts at the same level.
-        If both values are dictionaries, they will be merged recursively.
+
+        - Values in dict2 override dict1 if there are conflicts at the same level.
+        - If both values are dictionaries, they will be merged recursively.
+        
+        Parameters:
+        dict1 (dict): Base dictionary.
+        dict2 (dict): Dictionary with updated values.
+        
+        Returns:
+        dict: Merged dictionary containing elements from both dict1 and dict2.
         """
         result = dict1.copy()
         
@@ -61,6 +66,9 @@ class JISEBIEvaluation:
             if key in result and isinstance(result[key], dict) and isinstance(value, dict):
                 # If both are dictionaries, merge them recursively
                 result[key] = self.merge_reports(result[key], value)
+            elif key in result and isinstance(result[key], list) and isinstance(value, list):
+                # Merge lists by appending elements
+                result[key] += value
             else:
                 # Otherwise, just update the value
                 result[key] = value
@@ -71,10 +79,17 @@ class JISEBIEvaluation:
         if self.jisebi_document.title["index"] == -1 or self.jisebi_document.abstract["index"] == -1:
             return None
         else:
-            return await semantic.check_novelty(
+            response = await semantic.check_novelty(
                 stringify(self.jisebi_document.title["content"]), 
                 stringify(self.jisebi_document.abstract["paragraph"]["content"])
             )
+            similarities = [journal["similarity"] for journal in response["journals"]]
+            average_similarity = sum(similarities) / len(similarities) if similarities else 0.0
+
+            return {
+                "num_results": response["num_results"],
+                "average_similarity": average_similarity
+            }
     
     async def check_discon(self):
         if self.jisebi_document.discussion["index"] == -1 or self.jisebi_document.conclusion["index"] == -1:
@@ -100,19 +115,51 @@ class JISEBIEvaluation:
             )
 
             if response["has_comparison"] == False:
-                result["discussion"]["section_issue"]["semantic"] = "The section does not indicate any comparison"
+                result["discussion"]["section_issue"]["semantic"] = ["The section does not indicate any comparison"]
             if response["has_contribution"] == False:
-                result["conclusion"]["section_issue"]["semantic"] = "The section does not indicate any contribution statement"
+                result["conclusion"]["section_issue"]["semantic"] = ["The section does not indicate any contribution statement"]
 
             return result
 
         
     async def check_ner(self):
-        if self.jisebi_document.title["index"] == -1:
-            return None
+
+        sections = ['title', 'abstract', 'introduction', 'conclusion']
+        payload = []
+        result = {}
+
+        for section in sections:
+            section_object = getattr(self.jisebi_document, section)
+            if section_object["index"] != -1:
+                result[section] = {}
+                if section == 'title':
+                    payload.append(stringify(section_object["content"]))
+                else:
+                    payload.append(stringify(section_object["paragraph"]["content"]))
+                
+        if payload == []:
+            result = {}
         else:
-            return await semantic.check_ner(stringify(self.jisebi_document.title["content"]))
+            response = await semantic.check_ner(payload)
+
+            
+            for index, (key, value) in enumerate(result.items()):
+                if response["entities"][index] != []:
+                    result[key] = {
+                        "section_issue": {
+                            "semantic": ["Potential location or organization detected. Please check."]
+                        }
+                    }
         
+
+            # for index, (key, value) in enumerate(result.items()):
+            #     result[key] = {
+            #         "text": response["text"][index],
+            #         "entities": response["entities"][index]
+            #     }
+        
+        return result
+
     async def check_grammar(self):
         if self.jisebi_document.title["index"] == -1:
             return None

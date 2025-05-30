@@ -112,6 +112,7 @@ template_str = """
             background: white;
             border-radius: 6px;
             box-shadow: 0 2px 3px rgba(0, 0, 0, 0.1);
+            margin-bottom: 10px;
         }
         .stat-label {
             font-size: 0.8rem;
@@ -168,6 +169,21 @@ template_str = """
                 <div class="stat-value"> {{ sections_with_not_found_issues }} </div>
             </div>
         </div>
+
+        <div class="section-card">
+            <div class="section-header">
+                Novelty Statistics
+            </div>
+            <div class="section-body">
+                <div class="reference-item">
+                    <strong>Papers Found: </strong> {{ data["novelty"]["num_results"] }}
+                </div>
+                <div class="reference-item">
+                    <strong>Average of Abstract Similarity from Papers Found: </strong> {{ data["novelty"]["average_similarity"] }}
+                </div>
+            </div>
+        </div>
+
     </div>
 
     <div class="dashboard">
@@ -224,10 +240,12 @@ template_str = """
                         {% if data[section]["section_issue"]["semantic"] != {} %}
                             <p>This section has semantic errors</p>
                                 
-                            <div class="reference-item">
-                                <strong>Semantic Error:</strong> 
-                                    {{ data[section]["section_issue"]["semantic"] }}
-                            </div>
+                            {% for error in data[section]["section_issue"]["semantic"] %}
+                                <div class="reference-item">
+                                    <strong>Semantic Error:</strong> 
+                                        {{ error }}
+                                </div>
+                            {% endfor %}
 
                         {% endif %}
                     {% endif %}

@@ -29,7 +29,7 @@ class AuthService:
         async with httpx.AsyncClient() as client:
             try:
                 response = await client.post(
-                    f"{self.auth_service_url}/auth/verify-token",
+                    f"{self.auth_service_url}/api/auth/verify-token",
                     headers={"Authorization": token},
                     timeout=self.timeout
                 )

@@ -504,7 +504,8 @@ async def rendur():
                 "section_issue": {
                     "not_found": [],
                     "sequence": []
-                }
+                },
+                "body": {}
             },
             "authors": {
                 "section_issue": {
@@ -524,36 +525,163 @@ async def rendur():
             "abstract": {
                 "section_issue": {
                     "not_found": [],
-                    "sequence": []
+                    "sequence": [],
+                    "semantic": [
+                        "Potential location or organization detected. Please check."
+                    ]
                 },
                 "header": {},
                 "background": {
-                    "body": {},
-                    "prefix": {}
+                    "prefix": [
+                        {
+                            "run_index": 0,
+                            "text": "Background:",
+                            "issues": {
+                                "font_size": "Font size is 10pt instead of 9pt"
+                            }
+                        }
+                    ],
+                    "body": [
+                        {
+                            "run_index": 0,
+                            "text": " What is the latest knowledge on the issue? ",
+                            "issues": {
+                                "font_size": "Font size is 10pt instead of 9pt"
+                            }
+                        }
+                    ]
                 },
                 "objective": {
-                    "body": {},
-                    "prefix": {}
+                    "prefix": [
+                        {
+                            "run_index": 0,
+                            "text": "Objective:",
+                            "issues": {
+                                "font_size": "Font size is 10pt instead of 9pt"
+                            }
+                        }
+                    ],
+                    "body": [
+                        {
+                            "run_index": 0,
+                            "text": " What did you want to find out? ",
+                            "issues": {
+                                "font_size": "Font size is 10pt instead of 9pt"
+                            }
+                        }
+                    ]
                 },
                 "methods": {
-                    "body": {},
-                    "prefix": {}
+                    "prefix": [
+                        {
+                            "run_index": 0,
+                            "text": "Methods:",
+                            "issues": {
+                                "font_size": "Font size is 10pt instead of 9pt"
+                            }
+                        }
+                    ],
+                    "body": [
+                        {
+                            "run_index": 0,
+                            "text": " How did you go about finding it? What type of methodology did you use? A quantitative study/a randomized controlled study/a qualitative survey/a literature review/a double blind trial",
+                            "issues": {
+                                "font_size": "Font size is 10pt instead of 9pt"
+                            }
+                        }
+                    ]
                 },
                 "results": {
-                    "body": {},
-                    "prefix": {}
+                    "prefix": [
+                        {
+                            "run_index": 0,
+                            "text": "Results:",
+                            "issues": {
+                                "font_size": "Font size is 10pt instead of 9pt"
+                            }
+                        }
+                    ],
+                    "body": [
+                        {
+                            "run_index": 0,
+                            "text": " What did you find? What data or outcomes did you observe? Do not be vague! State exactly what you found.",
+                            "issues": {
+                                "font_size": "Font size is 10pt instead of 9pt"
+                            }
+                        }
+                    ]
                 },
                 "conclusion": {
-                    "body": {},
-                    "prefix": {}
+                    "prefix": [
+                        {
+                            "run_index": 0,
+                            "text": "Conclusion:",
+                            "issues": {
+                                "font_size": "Font size is 10pt instead of 9pt"
+                            }
+                        }
+                    ],
+                    "body": [
+                        {
+                            "run_index": 0,
+                            "text": " What did your results tell you? Did you find out what you wanted? Why or why not? What should be studied next?",
+                            "issues": {
+                                "font_size": "Font size is 10pt instead of 9pt"
+                            }
+                        }
+                    ]
                 },
                 "keywords": {
-                    "body": {},
-                    "prefix": {}
+                    "body": {
+                        "0": {
+                            "run_issues": [
+                                {
+                                    "run_index": 0,
+                                    "text": "Keywords",
+                                    "issues": {
+                                        "bold": "Bold is True instead of False",
+                                        "italic": "Italic is True instead of False"
+                                    }
+                                },
+                                {
+                                    "run_index": 1,
+                                    "text": ":",
+                                    "issues": {
+                                        "bold": "Bold is True instead of False",
+                                        "italic": "Italic is True instead of False"
+                                    }
+                                }
+                            ],
+                            "paragraph_issues": {}
+                        }
+                    },
+                    "prefix": [
+                        {
+                            "run_index": 0,
+                            "text": "Keywords",
+                            "issues": {
+                                "font_size": "Font size is 10pt instead of 8pt"
+                            }
+                        }
+                    ]
                 },
                 "article_history": {
-                    "body": {},
-                    "prefix": {}
+                    "body": {
+                        "0": {
+                            "run_issues": [
+                                {
+                                    "run_index": 0,
+                                    "text": "Article history:",
+                                    "issues": {
+                                        "bold": "Bold is True instead of False",
+                                        "italic": "Italic is True instead of False"
+                                    }
+                                }
+                            ],
+                            "paragraph_issues": {}
+                        }
+                    },
+                    "prefix": []
                 }
             },
             "introduction": {
@@ -561,10 +689,40 @@ async def rendur():
                     "not_found": [],
                     "sequence": [
                         "Should come before literature_review"
+                    ],
+                    "semantic": [
+                        "Potential location or organization detected. Please check."
                     ]
                 },
                 "heading": {},
-                "body": {}
+                "body": {
+                    "0": {
+                        "run_issues": [
+                            {
+                                "run_index": 0,
+                                "text": "Related Works",
+                                "issues": {
+                                    "font_size": "Font size is 14.0pt instead of 10pt"
+                                }
+                            },
+                            {
+                                "run_index": 2,
+                                "text": "or Literature review section is optional.",
+                                "issues": {
+                                    "font_name": "Font name is 'Antonio SemiBold' instead of 'Times New Roman'"
+                                }
+                            },
+                            {
+                                "run_index": 6,
+                                "text": "only shown in ",
+                                "issues": {
+                                    "font_size": "Font size is 11.5pt instead of 10pt"
+                                }
+                            }
+                        ],
+                        "paragraph_issues": {}
+                    }
+                }
             },
             "method": {
                 "section_issue": {
@@ -572,20 +730,197 @@ async def rendur():
                     "sequence": []
                 },
                 "heading": {},
-                "body": {}
+                "body": {
+                    "21": {
+                        "run_issues": [
+                            {
+                                "run_index": 0,
+                                "text": "The significance of The Relationships in The Model",
+                                "issues": {
+                                    "font_size": "Font size is 8.0pt instead of 10pt"
+                                }
+                            }
+                        ],
+                        "paragraph_issues": {}
+                    },
+                    "23": {
+                        "run_issues": [
+                            {
+                                "run_index": 3,
+                                "text": "\t*alpha=0.05",
+                                "issues": {
+                                    "font_size": "Font size is 8.0pt instead of 10pt"
+                                }
+                            },
+                            {
+                                "run_index": 4,
+                                "text": " (this is additional ",
+                                "issues": {
+                                    "font_size": "Font size is 8.0pt instead of 10pt"
+                                }
+                            },
+                            {
+                                "run_index": 5,
+                                "text": "legend/caption",
+                                "issues": {
+                                    "font_size": "Font size is 8.0pt instead of 10pt"
+                                }
+                            },
+                            {
+                                "run_index": 7,
+                                "text": "for clarity",
+                                "issues": {
+                                    "font_size": "Font size is 8.0pt instead of 10pt"
+                                }
+                            },
+                            {
+                                "run_index": 8,
+                                "text": " of data description, if needed)",
+                                "issues": {
+                                    "font_size": "Font size is 8.0pt instead of 10pt"
+                                }
+                            }
+                        ],
+                        "paragraph_issues": {}
+                    },
+                    "36": {
+                        "run_issues": [
+                            {
+                                "run_index": 1,
+                                "text": "",
+                                "issues": {
+                                    "font_name": "Font name is 'Symbol' instead of 'Times New Roman'"
+                                }
+                            },
+                            {
+                                "run_index": 2,
+                                "text": "",
+                                "issues": {
+                                    "font_name": "Font name is 'Symbol' instead of 'Times New Roman'"
+                                }
+                            },
+                            {
+                                "run_index": 3,
+                                "text": "",
+                                "issues": {
+                                    "font_name": "Font name is 'Symbol' instead of 'Times New Roman'"
+                                }
+                            },
+                            {
+                                "run_index": 4,
+                                "text": "",
+                                "issues": {
+                                    "font_name": "Font name is 'Symbol' instead of 'Times New Roman'"
+                                }
+                            },
+                            {
+                                "run_index": 5,
+                                "text": "",
+                                "issues": {
+                                    "font_name": "Font name is 'Symbol' instead of 'Times New Roman'"
+                                }
+                            },
+                            {
+                                "run_index": 6,
+                                "text": "",
+                                "issues": {
+                                    "font_name": "Font name is 'Symbol' instead of 'Times New Roman'"
+                                }
+                            },
+                            {
+                                "run_index": 7,
+                                "text": "",
+                                "issues": {
+                                    "font_name": "Font name is 'Symbol' instead of 'Times New Roman'"
+                                }
+                            },
+                            {
+                                "run_index": 8,
+                                "text": "",
+                                "issues": {
+                                    "font_name": "Font name is 'Symbol' instead of 'Times New Roman'"
+                                }
+                            },
+                            {
+                                "run_index": 9,
+                                "text": "",
+                                "issues": {
+                                    "font_name": "Font name is 'Symbol' instead of 'Times New Roman'"
+                                }
+                            },
+                            {
+                                "run_index": 10,
+                                "text": "",
+                                "issues": {
+                                    "font_name": "Font name is 'Symbol' instead of 'Times New Roman'"
+                                }
+                            },
+                            {
+                                "run_index": 11,
+                                "text": "",
+                                "issues": {
+                                    "font_name": "Font name is 'Symbol' instead of 'Times New Roman'"
+                                }
+                            },
+                            {
+                                "run_index": 12,
+                                "text": "",
+                                "issues": {
+                                    "font_name": "Font name is 'Symbol' instead of 'Times New Roman'"
+                                }
+                            },
+                            {
+                                "run_index": 14,
+                                "text": "",
+                                "issues": {
+                                    "font_name": "Font name is 'Symbol' instead of 'Times New Roman'"
+                                }
+                            },
+                            {
+                                "run_index": 15,
+                                "text": "",
+                                "issues": {
+                                    "font_name": "Font name is 'Symbol' instead of 'Times New Roman'"
+                                }
+                            },
+                            {
+                                "run_index": 16,
+                                "text": "",
+                                "issues": {
+                                    "font_name": "Font name is 'Symbol' instead of 'Times New Roman'"
+                                }
+                            }
+                        ],
+                        "paragraph_issues": {}
+                    }
+                }
             },
             "result": {
                 "section_issue": {
                     "not_found": [],
                     "sequence": []
                 },
-                "heading": {},
+                "heading": {
+                    "0": {
+                        "run_issues": [
+                            {
+                                "run_index": 1,
+                                "text": "ults",
+                                "issues": {
+                                    "font_name": "Font name is 'Algerian' instead of 'Times New Roman'"
+                                }
+                            }
+                        ],
+                        "paragraph_issues": {}
+                    }
+                },
                 "body": {}
             },
             "discussion": {
                 "section_issue": {
                     "not_found": [],
-                    "sequence": []
+                    "sequence": [],
+                    "semantic": {}
                 },
                 "heading": {},
                 "body": {}
@@ -593,10 +928,34 @@ async def rendur():
             "conclusion": {
                 "section_issue": {
                     "not_found": [],
-                    "sequence": []
+                    "sequence": [],
+                    "semantic": [
+                        "The section does not indicate any contribution statement",
+                        "Potential location or organization detected. Please check."
+                    ]
                 },
                 "heading": {},
-                "body": {}
+                "body": {
+                    "15": {
+                        "run_issues": [
+                            {
+                                "run_index": 2,
+                                "text": "There were no animal subjects",
+                                "issues": {
+                                    "font_name": "Font name is 'Anton' instead of 'Times New Roman'"
+                                }
+                            },
+                            {
+                                "run_index": 15,
+                                "text": "this statement is mandatory.",
+                                "issues": {
+                                    "font_name": "Font name is 'a_Campus' instead of 'Times New Roman'"
+                                }
+                            }
+                        ],
+                        "paragraph_issues": {}
+                    }
+                }
             },
             "references": {
                 "section_issue": {
@@ -617,23 +976,91 @@ async def rendur():
                             "style": "Style is Normal instead of references"
                         }
                     },
-                    "2": {
-                        "run_issues": [],
-                        "paragraph_issues": {
-                            "style": "Style is Normal instead of references"
-                        }
+                    "3": {
+                        "run_issues": [
+                            {
+                                "run_index": 0,
+                                "text": "G. Eason, B. Noble, and I.N. Sneddon, “On certain integrals of Lipschitz-Hankel type involving products of Bessel functions,” Phil. Trans. Roy. Soc. London, vol. A247, pp. 529-551, April 1955. (",
+                                "issues": {
+                                    "font_size": "Font size is 8.0pt instead of 10pt"
+                                }
+                            },
+                            {
+                                "run_index": 1,
+                                "text": "references",
+                                "issues": {
+                                    "font_size": "Font size is 8.0pt instead of 10pt"
+                                }
+                            },
+                            {
+                                "run_index": 2,
+                                "text": ")",
+                                "issues": {
+                                    "font_size": "Font size is 8.0pt instead of 10pt"
+                                }
+                            }
+                        ],
+                        "paragraph_issues": {}
                     },
-                    "9": {
-                        "run_issues": [],
-                        "paragraph_issues": {
-                            "style": "Style is Normal instead of references"
-                        }
+                    "4": {
+                        "run_issues": [
+                            {
+                                "run_index": 0,
+                                "text": "J. Clerk Maxwell, A Treatise on Electricity and Magnetism, 3rd ed., vol. 2. Oxford: Clarendon, 1892, pp.68-73.",
+                                "issues": {
+                                    "font_size": "Font size is 8.0pt instead of 10pt"
+                                }
+                            }
+                        ],
+                        "paragraph_issues": {}
                     },
-                    "10": {
-                        "run_issues": [],
-                        "paragraph_issues": {
-                            "style": "Style is Normal instead of references"
-                        }
+                    "5": {
+                        "run_issues": [
+                            {
+                                "run_index": 0,
+                                "text": "I.S. Jacobs and C.P. Bean, “Fine particles, thin films and exchange anisotropy,” in Magnetism, vol. III, G.T. Rado and H. Suhl, Eds. New York: Academic, 1963, pp. 271-350.",
+                                "issues": {
+                                    "font_size": "Font size is 8.0pt instead of 10pt"
+                                }
+                            }
+                        ],
+                        "paragraph_issues": {}
+                    },
+                    "6": {
+                        "run_issues": [
+                            {
+                                "run_index": 0,
+                                "text": "K. Elissa, “Title of paper if known,” unpublished.",
+                                "issues": {
+                                    "font_size": "Font size is 8.0pt instead of 10pt"
+                                }
+                            }
+                        ],
+                        "paragraph_issues": {}
+                    },
+                    "7": {
+                        "run_issues": [
+                            {
+                                "run_index": 0,
+                                "text": "R. Nicole, “Title of paper with only first word capitalized,” J. Name Stand. Abbrev., in press.",
+                                "issues": {
+                                    "font_size": "Font size is 8.0pt instead of 10pt"
+                                }
+                            }
+                        ],
+                        "paragraph_issues": {}
+                    },
+                    "8": {
+                        "run_issues": [
+                            {
+                                "run_index": 0,
+                                "text": "Y. Yorozu, M. Hirano, K. Oka, and Y. Tagawa, “Electron spectroscopy studies on magneto-optical media and plastic substrate interface,” IEEE Transl. J. Magn. Japan, vol. 2, pp. 740-741, August 1987 [Digests 9th Annual Conf. Magnetics Japan, p. 301, 1982].",
+                                "issues": {
+                                    "font_size": "Font size is 8.0pt instead of 10pt"
+                                }
+                            }
+                        ],
+                        "paragraph_issues": {}
                     },
                     "11": {
                         "run_issues": [],
@@ -645,6 +1072,7 @@ async def rendur():
             },
             "literature_review": {
                 "section_issue": {
+                    "not_found": [],
                     "sequence": [
                         "Should come after introduction"
                     ]
@@ -652,11 +1080,288 @@ async def rendur():
                 "heading": {},
                 "body": {}
             },
+            "semantic": {
+                "grammar": {
+                    "status": True,
+                    "data": {
+                        "original": "Title of the Paper",
+                        "corrected": "Fix grammar and typos. Title of the Paper.",
+                        "highlighted_typos": [
+                            {
+                                "word": "Fix",
+                                "status": "suggested addition"
+                            },
+                            {
+                                "word": "grammar",
+                                "status": "suggested addition"
+                            },
+                            {
+                                "word": "and",
+                                "status": "suggested addition"
+                            },
+                            {
+                                "word": "typos.",
+                                "status": "suggested addition"
+                            },
+                            {
+                                "word": "Title",
+                                "status": "correct"
+                            },
+                            {
+                                "word": "of",
+                                "status": "correct"
+                            },
+                            {
+                                "word": "the",
+                                "status": "correct"
+                            },
+                            {
+                                "word": "_Paper_",
+                                "status": "typo (underlined)"
+                            }
+                        ]
+                    }
+                },
+                "abstract": {
+                    "keyword_results": [
+                        "Keywords: Keyword 1 exists.",
+                        "Keyword 2 exists.",
+                        "Keyword 3 exists.",
+                        "Keyword 4 exists.",
+                        "Keyword 5 exists.",
+                        "Keyword 6 (Min 3 exists.",
+                        "Max 6 phrases/keywords. A combination of all keywords represents the content exists.",
+                        "contribution exists.",
+                        "or purpose of the manuscript.) exists."
+                    ],
+                    "nlp_result": [
+                        {
+                            "label": "Background",
+                            "sentences": [],
+                            "empty": True
+                        },
+                        {
+                            "label": "Objective",
+                            "sentences": [
+                                "Objective: What did you want to find out?",
+                                "A combination of all keywords represents the content, contribution, or purpose of the manuscript.)"
+                            ],
+                            "empty": False
+                        },
+                        {
+                            "label": "Methods",
+                            "sentences": [
+                                "Background: What is the latest knowledge on the issue?",
+                                "Methods: How did you go about finding it?",
+                                "What type of methodology did you use?",
+                                "What data or outcomes did you observe?",
+                                "Do not be vague!",
+                                "State exactly what you found.",
+                                "Did you find out what you wanted?",
+                                "Why or why not?",
+                                "What should be studied next?",
+                                "(Abstract consists of 150 to a maximum of 300 words.",
+                                "Abstracts are arranged in a structured manner.)",
+                                "Keywords: Keyword 1, Keyword 2, Keyword 3, Keyword 4, Keyword 5, Keyword 6 (Min 3, Max 6 phrases/keywords.",
+                                "Article history: Received 5 April 20XX, first decision 22 April 20XX, accepted 22 August 20XX, available online 28 October 20XX"
+                            ],
+                            "empty": False
+                        },
+                        {
+                            "label": "Results",
+                            "sentences": [
+                                "A quantitative study/a randomized controlled study/a qualitative survey/a literature review/a double blind trial\nResults: What did you find?",
+                                "Conclusion: What did your results tell you?"
+                            ],
+                            "empty": False
+                        },
+                        {
+                            "label": "Conclusions",
+                            "sentences": [],
+                            "empty": True
+                        }
+                    ],
+                    "common_keywords": [
+                        "keyword",
+                        "20xx",
+                        "keywords",
+                        "find",
+                        "study"
+                    ],
+                    "word_count": 158
+                }
+            },
             "novelty": {
-                "something": "something"
+                "num_results": 20,
+                "average_similarity": 0.0,
+                "details": {
+                    "query": "Title of the Paper",
+                    "num_results": 20,
+                    "journals": [
+                        {
+                            "doi": "10.24071/llt.v23i2.2581.s280",
+                            "title": "Paper title page",
+                            "abstract": "",
+                            "url": "https://doi.org/10.24071/llt.v23i2.2581.s280",
+                            "similarity": 0.0,
+                            "common_keywords": []
+                        },
+                        {
+                            "doi": "10.5194/bg-2016-177-rc2",
+                            "title": "see title of paper",
+                            "abstract": "",
+                            "url": "https://doi.org/10.5194/bg-2016-177-rc2",
+                            "similarity": 0.0,
+                            "common_keywords": []
+                        },
+                        {
+                            "doi": "10.5194/essd-2020-203-sc4",
+                            "title": "Title of the paper",
+                            "abstract": "",
+                            "url": "https://doi.org/10.5194/essd-2020-203-sc4",
+                            "similarity": 0.0,
+                            "common_keywords": []
+                        },
+                        {
+                            "doi": "10.5555/testconfpaperwebdeposit",
+                            "title": "Test Conference Paper",
+                            "abstract": "",
+                            "url": "https://doi.org/10.5555/testconfpaperwebdeposit",
+                            "similarity": 0.0,
+                            "common_keywords": []
+                        },
+                        {
+                            "doi": "10.5555/conferences123",
+                            "title": "Paper Title",
+                            "abstract": "",
+                            "url": "https://doi.org/10.5555/conferences123",
+                            "similarity": 0.0,
+                            "common_keywords": []
+                        },
+                        {
+                            "doi": "10.1117/12.280779",
+                            "title": "&lt;title&gt;Interactive paper as security substrate&lt;/title&gt;",
+                            "abstract": "",
+                            "url": "https://doi.org/10.1117/12.280779",
+                            "similarity": 0.0,
+                            "common_keywords": []
+                        },
+                        {
+                            "doi": "10.5555/abcdef123",
+                            "title": "Paper Title",
+                            "abstract": "",
+                            "url": "https://doi.org/10.5555/abcdef123",
+                            "similarity": 0.0,
+                            "common_keywords": []
+                        },
+                        {
+                            "doi": "10.1117/12.280771",
+                            "title": "&lt;title&gt;Photoerasing paper and thermocoloring film&lt;/title&gt;",
+                            "abstract": "",
+                            "url": "https://doi.org/10.1117/12.280771",
+                            "similarity": 0.0,
+                            "common_keywords": []
+                        },
+                        {
+                            "doi": "10.1117/12.280763",
+                            "title": "&lt;title&gt;Chemical control of water penetration in paper&lt;/title&gt;",
+                            "abstract": "",
+                            "url": "https://doi.org/10.1117/12.280763",
+                            "similarity": 0.0,
+                            "common_keywords": []
+                        },
+                        {
+                            "doi": "10.5194/gmd-2016-69-sc2",
+                            "title": "Reply to comment on paper title by Executive Editor",
+                            "abstract": "",
+                            "url": "https://doi.org/10.5194/gmd-2016-69-sc2",
+                            "similarity": 0.0,
+                            "common_keywords": []
+                        },
+                        {
+                            "doi": "10.5194/gmd-2020-238-ac1",
+                            "title": "Amendment of paper title and data availability",
+                            "abstract": "",
+                            "url": "https://doi.org/10.5194/gmd-2020-238-ac1",
+                            "similarity": 0.0,
+                            "common_keywords": []
+                        },
+                        {
+                            "doi": "10.1117/12.280777",
+                            "title": "&lt;title&gt;Integrated electronic circuits and devices based on interactive paper&lt;/title&gt;",
+                            "abstract": "",
+                            "url": "https://doi.org/10.1117/12.280777",
+                            "similarity": 0.0,
+                            "common_keywords": []
+                        },
+                        {
+                            "doi": "10.1117/12.280765",
+                            "title": "&lt;title&gt;Paper and the electronic age: evolution or revolution&lt;/title&gt;",
+                            "abstract": "",
+                            "url": "https://doi.org/10.1117/12.280765",
+                            "similarity": 0.0,
+                            "common_keywords": []
+                        },
+                        {
+                            "doi": "10.1117/12.280768",
+                            "title": "&lt;title&gt;Effect of RC paper support on photographic stability&lt;/title&gt;",
+                            "abstract": "",
+                            "url": "https://doi.org/10.1117/12.280768",
+                            "similarity": 0.0,
+                            "common_keywords": []
+                        },
+                        {
+                            "doi": "10.21428/d28e8e57.3272dd18",
+                            "title": "Evaluation summary and metrics: “Title of paper” (template)",
+                            "abstract": "",
+                            "url": "https://doi.org/10.21428/d28e8e57.3272dd18",
+                            "similarity": 0.0,
+                            "common_keywords": []
+                        },
+                        {
+                            "doi": "10.1117/12.280774",
+                            "title": "&lt;title&gt;Influence of microbial contamination on the quality of printing paper&lt;/title&gt;",
+                            "abstract": "",
+                            "url": "https://doi.org/10.1117/12.280774",
+                            "similarity": 0.0,
+                            "common_keywords": []
+                        },
+                        {
+                            "doi": "10.1117/12.280782",
+                            "title": "&lt;title&gt;Chemical approaches to new coating and filler particles for paper technology&lt;/title&gt;",
+                            "abstract": "",
+                            "url": "https://doi.org/10.1117/12.280782",
+                            "similarity": 0.0,
+                            "common_keywords": []
+                        },
+                        {
+                            "doi": "10.1117/12.280778",
+                            "title": "&lt;title&gt;Potential use of individual components in interactive paper&lt;/title&gt;",
+                            "abstract": "",
+                            "url": "https://doi.org/10.1117/12.280778",
+                            "similarity": 0.0,
+                            "common_keywords": []
+                        },
+                        {
+                            "doi": "10.5194/essd-2023-168-rc1",
+                            "title": "The paper should have a clear focus on the validation dataset (relfecting the title of the paper)",
+                            "abstract": "",
+                            "url": "https://doi.org/10.5194/essd-2023-168-rc1",
+                            "similarity": 0.0,
+                            "common_keywords": []
+                        },
+                        {
+                            "doi": "10.1017/9781316650431.012",
+                            "title": "Title",
+                            "abstract": "",
+                            "url": "https://doi.org/10.1017/9781316650431.012",
+                            "similarity": 0.0,
+                            "common_keywords": []
+                        }
+                    ]
+                }
             }
         }
-
     )
         
 

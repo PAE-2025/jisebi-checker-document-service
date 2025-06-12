@@ -23,7 +23,7 @@ class JISEBIEvaluation:
 
     async def generate_overall_summary(self):
         
-        result1, result2, result3, novelty, discon, ner, grammar = await asyncio.gather(
+        result1, result2, result3, novelty, discon, ner, grammar, abstract = await asyncio.gather(
             self.sections_exist(), 
             self.sections_order(), 
             self.check_document_font(),
@@ -31,16 +31,18 @@ class JISEBIEvaluation:
             self.check_discon(),
             self.check_ner(),
             self.check_grammar(),
+            self.check_abstract()
         )
 
-        print(novelty)
-        print(discon)
-        print(ner)
-        print(grammar)
+        # print(novelty)
+        # print(discon)
+        # print(ner)
+        # print(grammar)
 
         merged_reports = self.merge_reports(self.merge_reports(self.merge_reports(self.merge_reports(result1, result2), result3), discon), ner)
         merged_reports["semantic"] = {
-            "grammar": grammar
+            "grammar": grammar,
+            "abstract": abstract
         }
         merged_reports["novelty"] = novelty
     
@@ -88,7 +90,8 @@ class JISEBIEvaluation:
 
             return {
                 "num_results": response["num_results"],
-                "average_similarity": average_similarity
+                "average_similarity": average_similarity,
+                "details": response
             }
     
     async def check_discon(self):
@@ -165,6 +168,14 @@ class JISEBIEvaluation:
             return None
         else:
             return await semantic.check_grammar(stringify(self.jisebi_document.title["content"]))
+        
+    async def check_abstract(self):
+        if self.jisebi_document.abstract["index"] == -1:
+            return None
+        else:
+            abstract = stringify(self.jisebi_document.abstract["paragraph"]["content"])
+            keyword = stringify(self.jisebi_document.abstract["paragraph"]["keywords"]["content"])
+            return await semantic.check_abstract(abstract, keyword)
 
 
     async def sections_exist(self):

@@ -176,11 +176,23 @@ template_str = """
             </div>
             <div class="section-body">
                 <div class="reference-item">
-                    <strong>Papers Found: </strong> {{ data["novelty"]["num_results"] }}
+                    <div>
+                        <strong>Papers Found: </strong> {{ data["novelty"]["num_results"] }}
+                    </div>
+                    <div>
+                        <strong>Average of Abstract Similarity from Papers Found: </strong> {{ data["novelty"]["average_similarity"] }}
+                    </div>
                 </div>
-                <div class="reference-item">
-                    <strong>Average of Abstract Similarity from Papers Found: </strong> {{ data["novelty"]["average_similarity"] }}
+            </div>
+            <div class="section-header" style="margin-top: 1rem;">
+                Similar Papers (Top 10)
+            </div>
+            <div class="reference-item">
+                {% for item in data["novelty"]["details"]["journals"][:10] %}
+                <div>
+                    <strong>{{ item.title | replace("&lt;title&gt;", "") | replace("&lt;/title&gt;", "") }}</strong> <a href="{{ item.url }}"> ({{ item.url }}) </a>
                 </div>
+                {% endfor %}
             </div>
         </div>
 
@@ -192,7 +204,7 @@ template_str = """
         {% else %}
         <div class="section-card">
             <div class="section-header">
-                {{ section | title }}
+                {{ section | replace("_", " ") | title }}
                 {% if data[section]["section_issue"]["not_found"] == [] and data[section]["section_issue"]["sequence"] == [] and (data[section]["body"] == {} or "body" not in data[section]) and (data[section]["heading"] == {} or "heading" not in data[section]) %}
                     <span class="status-tag status-pass">No Issues</span>
                 {% endif %}       
@@ -221,6 +233,13 @@ template_str = """
                     {% if data[section]["section_issue"]["not_found"] == [] and data[section]["section_issue"]["sequence"] == [] and data[section]["body"] == {} and data[section]["heading"] == {} %}
                         <p>This section has proper formatting and sequence. </p>
                     {% else %}  
+
+                    {% if "sequence" in data[section]["section_issue"] %}
+                        {% if data[section]["section_issue"]["sequence"] != [] %}
+                            <p>{{ data[section]["section_issue"]["sequence"][0] }}</p>
+                        {% endif %}
+                    {% endif %}
+
                         <p>Multiple paragraphs in this section have incorrect styling.</p>
                         {% for key, value in data[section]["body"].items() %}
                             

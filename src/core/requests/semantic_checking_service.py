@@ -63,4 +63,10 @@ class SemanticCheckingService:
         return await self.post_request('api/grammar/process-text', {
             "text": texts
         })
+    
+    async def check_abstract(self, abstract: str, keywords: str):
+        return await self.post_request('api/abstract/input_article', {
+            "abstract": abstract,
+            "keywords": keywords
+        })
           

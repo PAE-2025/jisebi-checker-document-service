@@ -39,11 +39,11 @@ class JISEBIEvaluation:
         # print(ner)
         # print(grammar)
 
-        merged_reports = self.merge_reports(self.merge_reports(self.merge_reports(self.merge_reports(result1, result2), result3), discon), ner)
-        merged_reports["semantic"] = {
-            "grammar": grammar,
-            "abstract": abstract
-        }
+        merged_reports = self.merge_reports(self.merge_reports(self.merge_reports(self.merge_reports(self.merge_reports(result1, result2), result3), discon), ner), abstract)
+        # merged_reports["semantic"] = {
+        #     "grammar": grammar,
+        #     "abstract": abstract
+        # }
         merged_reports["novelty"] = novelty
     
         return merged_reports
@@ -175,7 +175,23 @@ class JISEBIEvaluation:
         else:
             abstract = stringify(self.jisebi_document.abstract["paragraph"]["content"])
             keyword = stringify(self.jisebi_document.abstract["paragraph"]["keywords"]["content"])
-            return await semantic.check_abstract(abstract, keyword)
+            response = await semantic.check_abstract(abstract, keyword)
+
+            result = {
+                "abstract": {
+                    "section_issue": { 
+                        "semantic": [] 
+                    }
+                }
+            }
+
+            if (all(item.strip().endswith("exists.") for item in response["keyword_results"]) == False):
+                result["abstract"]["section_issue"]["semantic"].append("Not all keywords mentioned exist in the abstract. Please check.")
+            if(all(item["empty"] == False for item in response["nlp_result"]) == False):
+                result["abstract"]["section_issue"]["semantic"].append("Abstract structure incomplete. Please check.")
+
+            return result
+
 
 
     async def sections_exist(self):

@@ -5,8 +5,13 @@ FROM python:3.10
 RUN apt-get update && apt-get install -y \
     fontconfig \
     libreoffice \
-    wkhtmltopdf \
     && rm -rf /var/lib/apt/lists/*
+
+# Download and install wkhtmltopdf manually
+RUN wget https://github.com/wkhtmltopdf/wkhtmltopdf/releases/download/0.12.5/wkhtmltox_0.12.5-1.buster_amd64.deb \
+    && dpkg -i wkhtmltox_0.12.6-1.buster_amd64.deb \
+    && apt-get -f install -y \
+    && rm wkhtmltox_0.12.6-1.buster_amd64.deb
 
 # Create a fonts directory and copy project fonts
 COPY files/fonts/ /usr/share/fonts/truetype/custom/

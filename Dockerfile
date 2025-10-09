@@ -14,6 +14,14 @@ RUN apt-get update && apt-get install -y \
     libssl1.1 \
     && rm -rf /var/lib/apt/lists/*
 
+
+# Download and install libssl1.1 manually (if not available in the base image)
+RUN wget http://archive.ubuntu.com/ubuntu/pool/main/o/openssl/libssl1.1_1.1.1f-1ubuntu2_amd64.deb \
+    && dpkg -i libssl1.1_1.1.1f-1ubuntu2_amd64.deb \
+    && apt-get -f install -y \
+    && rm libssl1.1_1.1.1f-1ubuntu2_amd64.deb
+
+
 # Download and install wkhtmltopdf manually
 RUN wget https://github.com/wkhtmltopdf/wkhtmltopdf/releases/download/0.12.5/wkhtmltox_0.12.5-1.buster_amd64.deb \
     && dpkg -i wkhtmltox_0.12.5-1.buster_amd64.deb \

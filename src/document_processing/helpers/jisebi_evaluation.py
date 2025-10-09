@@ -39,11 +39,14 @@ class JISEBIEvaluation:
         # print(ner)
         # print(grammar)
 
-        merged_reports = self.merge_reports(self.merge_reports(self.merge_reports(self.merge_reports(self.merge_reports(result1, result2), result3), discon), ner), abstract)
-        # merged_reports["semantic"] = {
-        #     "grammar": grammar,
-        #     "abstract": abstract
-        # }
+        reports = [result1, result2, result3, discon, ner, abstract]
+        merged_reports = {}
+
+        for report in reports:
+            if report == None:
+                continue
+            merged_reports = self.merge_reports(merged_reports, report)
+
         merged_reports["novelty"] = novelty
     
         return merged_reports
@@ -139,7 +142,6 @@ class JISEBIEvaluation:
                     payload.append(stringify(section_object["content"]))
                 else:
                     payload.append(stringify(section_object["paragraph"]["content"]))
-                
         if payload == []:
             result = {}
         else:
@@ -211,27 +213,33 @@ class JISEBIEvaluation:
             "literature_review": {"section_issue": {"not_found": []}},
         }
     
-        sections = ['title', 'authors', 'abstract', 'introduction', 'method', 'result', 'discussion', 'conclusion', 'references']
+        sections = ['title', 'authors', 'abstract', 'introduction', 'method', 'result', 'discussion', 'conclusion', 'references', 'literature_review']
         
         for section in sections:
             section_object = getattr(document, section)
             if section not in ["authors", "abstract"]:
                 if section_object["index"] == -1:
                     result[section]["section_issue"]["not_found"].append(f"The {section} cannot be found")
+
             elif section == "authors":
                 if section_object["index"] == -1:
                     result[section]["section_issue"]["not_found"].append(f"The {section} cannot be found")
                     continue
+
                 if section_object["authors"]["index"] == -1:
                     result[section]["section_issue"]["not_found"].append(f"The Author(s)'s name cannot be found")
+
                 if "affiliation" not in section_object["affiliations"]["data"]["1"]:
                     result[section]["section_issue"]["not_found"].append(f"The Author(s)'s affiliation cannot be found")
+
                 if "email" not in section_object["affiliations"]["data"]["1"]:
                     result[section]["section_issue"]["not_found"].append(f"The Author(s)'s email cannot be found")
+
             elif section == "abstract":
                 if section_object["index"] == -1:
                     result[section]["section_issue"]["not_found"].append(f"The {section} cannot be found")
                     continue
+                
                 abstract_sections = ["background", "objective", "methods", "results", "conclusion", "keywords", "article_history"]
                 for abstract_section in abstract_sections:
                     if "heading" not in section_object["paragraph"][abstract_section]:

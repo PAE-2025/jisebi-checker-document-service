@@ -5,7 +5,6 @@ from docx.shared import RGBColor
 from docx.enum.text import WD_COLOR_INDEX
 from src.document_processing.helpers.jisebi_evaluation import JISEBIEvaluation
 from src.document_processing.helpers.jisebi_document import JISEBIDocument
-from files.reporting_template import template_str
 from jinja2 import Template
 from typing import Dict
 from datetime import datetime
@@ -16,6 +15,12 @@ import traceback
 import string
 import os
 from src.core.config import get_settings, Settings
+
+def load_template_from_html(filename: str) -> Template:
+    html_path = os.path.join(os.getcwd(), filename)
+    with open(html_path, "r", encoding="utf-8") as f:
+        template_str = f.read()
+    return Template(template_str)
 
 class JISEBIReporting:
 
@@ -214,31 +219,36 @@ class JISEBIReporting:
                 paragraph_start = 0
                 paragraph_end = len(getattr(document, key)["heading"]["content"])
                 self.add_highlight(obj_index, paragraph_start, paragraph_end, WD_COLOR_INDEX.YELLOW)
-            if key in ['introduction', 'method', 'result', 'discussion', 'conclusion', 'references', 'literature_review'] and (data['heading'] != {} or data["body"] != {}):
-                if data["body"] != {}:
-                    for paragraph_index, issue in data["body"].items():
-                        obj_index = getattr(document, key)["paragraph"]["index"]["first"] + int(paragraph_index)
-                        if issue["paragraph_issues"] != {}:
-                            paragraph_start = 0
-                            paragraph_end = len(self.jisebi_document.contents[obj_index].text)
-                            self.add_highlight(obj_index, paragraph_start, paragraph_end, WD_COLOR_INDEX.RED)
+            
+            if key in ['title', 'introduction', 'method', 'result', 'discussion', 'conclusion', 'references', 'literature_review']:
+                
+                if "heading" in data:
+                    if data['heading'] != {}:
+                        pass
 
-                        if issue["run_issues"] != []:
+                if "body" in data:
+                    if data["body"] != {}:
+                        for paragraph_index, issue in data["body"].items():
 
+                            if "index" in getattr(document, key):
+                                obj_index = getattr(document, key)["index"]["first"] + int(paragraph_index)
 
-                            # print(getattr(document, key)["object"])
-                            # for pra in getattr(document, key)["object"]:
-                            #     print (pra.text)
-
-                            paragraph = self.jisebi_document.contents[obj_index]
+                            if "paragraph" in getattr(document, key):
+                                obj_index = getattr(document, key)["paragraph"]["index"]["first"] + int(paragraph_index)
                             
-                            # paragraph = self..introduction["object"][key]
-                            for run_issue in issue["run_issues"]:
-                                run_index = run_issue["run_index"]
-                                run = paragraph.runs[run_index]
-                                run.font.highlight_color = WD_COLOR_INDEX.RED
+                            if issue["paragraph_issues"] != {}:
+                                paragraph_start = 0
+                                paragraph_end = len(self.jisebi_document.contents[obj_index].text)
+                                self.add_highlight(obj_index, paragraph_start, paragraph_end, WD_COLOR_INDEX.RED)
 
+                            if issue["run_issues"] != []:
 
+                                paragraph = self.jisebi_document.contents[obj_index]
+                                
+                                for run_issue in issue["run_issues"]:
+                                    run_index = run_issue["run_index"]
+                                    run = paragraph.runs[run_index]
+                                    run.font.highlight_color = WD_COLOR_INDEX.RED
 
                 # obj_index = getattr(document, key)["index"]["first"]
                 # paragraph_start = 0
@@ -318,7 +328,7 @@ class JISEBIReporting:
             if section_name == "semantic" or section_name == "novelty":
                 continue
             if "section_issue" in section_data:
-                if "not_found" in section_data["section_issue"] and section_data["section_issue"]["not_found"]:
+                if "not_found" in section_data["section_issue"] and section_data["section_issue"]["not_found"] and section_name != "literature_review":
                     section_issues["not_found"] = section_data["section_issue"]["not_found"]
                     total_issues += len(section_data["section_issue"]["not_found"])
                 
@@ -354,8 +364,8 @@ class JISEBIReporting:
         sections_with_not_found_issues = sum(1 for section in sections_with_issues if section["not_found"])
         sections_with_style_issues = sum(1 for section in sections_with_issues if section["style_issues"] > 0)
 
-        # Create a Template object
-        template = Template(template_str)
+        # Create a Template object using the HTML file and os.getcwd()
+        template = load_template_from_html("files/reporting_template.html")
         
         # Replace the now tag with actual datetime for demonstration
         current_time = datetime.now().strftime('%Y-%m-%d %H:%M:%S')
@@ -484,8 +494,8 @@ async def rendur():
 
     
 
-    # Create a Template object
-    template = Template(template_str)
+    # Create a Template object using the HTML file and os.getcwd()
+    template = load_template_from_html("files/reporting_template.html")
     
     # Replace the now tag with actual datetime for demonstration
     current_time = datetime.now().strftime('%Y-%m-%d %H:%M:%S')

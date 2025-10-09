@@ -1,5 +1,8 @@
+from io import BytesIO
 from typing import IO
 import datetime
+
+from fastapi.responses import StreamingResponse
 from src.document_processing.helpers.jisebi_document import JISEBIDocument
 from src.document_processing.helpers.jisebi_evaluation import JISEBIEvaluation
 from src.document_processing.helpers.jisebi_reporting import JISEBIReporting
@@ -36,11 +39,43 @@ class JISEBIProcessingService:
 
                 db.update_document(document_id=task_id, data={
                     'status': 'processed',
+                    'report_data': report.jisebi_report
                 })
 
                 storage.delete(f"{task_id}/input.docx")
             
                 return "success"
+            
+            except Exception as e:
+                traceback.print_exc()
+                raise Exception(({
+                    "failure": "Failed processing document",
+                    "detail": e
+            }))
+
+        raise Exception("Cannot find task (incorrect id or already processed)")
+    
+    async def preview_result(self, task_id) -> BytesIO:
+
+        query = db.collection.where("task_id", "==", task_id).where("status", "==", "awaiting").limit(1).stream()
+        
+        task_doc = next(query, None)
+
+        if task_doc:
+
+            try:
+
+                file = storage.download(f"{task_id}/input.docx")
+                file.seek(0)
+
+                # Process Task
+                document = JISEBIDocument(file)
+                evaluation = JISEBIEvaluation(document)
+                report = JISEBIReporting(evaluation)
+                
+                pdf_report = await report.generate_final_report()
+
+                return pdf_report
             
             except Exception as e:
                 traceback.print_exc()

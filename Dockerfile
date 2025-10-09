@@ -11,7 +11,6 @@ RUN apt-get update && apt-get install -y \
     libxrender1 \
     libxtst6 \
     libpng-dev \
-    libssl1.1 \
     && rm -rf /var/lib/apt/lists/*
 
 

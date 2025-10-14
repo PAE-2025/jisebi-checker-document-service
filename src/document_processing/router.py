@@ -58,13 +58,22 @@ async def processing_endpoint(
         raise HTTPException(status_code=400, detail="Task ID is required")
 
     try:
-        result = await service.preview_result(task_data.task_id)
+        result, report = await service.preview_result(task_data.task_id)
         result.seek(0)
-        return StreamingResponse(
-            result,
-            media_type="application/pdf",
-            headers={"Content-Disposition": f"attachment; filename={task_data.task_id}.pdf"}
-        )
+        accept_header = request.headers.get("accept", "")
+
+        if "application/json" in accept_header:
+            return JSONResponse(content=report)
+        elif "format/json" in accept_header:
+            return JSONResponse(content=report)
+        else:
+            return StreamingResponse(
+                result,
+                media_type="application/pdf",
+                headers={
+                    "Content-Disposition": f"attachment; filename={task_data.task_id}.pdf",
+                }
+            )
     except Exception as e:
         if retry_count + 1 == MAX_ATTEMPTS:
             task.enqueue_task(task_data.task_id)

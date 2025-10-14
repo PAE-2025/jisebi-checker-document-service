@@ -300,6 +300,9 @@
                                     {% for key, value in data[section]["heading"].items() %}
                                         <div class="reference-item">
                                             <strong>Heading {{key}}:</strong> 
+                                                {% if value["paragraph_issues"] != {} %}
+                                                    {{value["paragraph_issues"]["style"]}} &nbsp;
+                                                {% endif %}
                                                 {% if value["run_issues"] != [] %}
                                                     Make sure the font size, bold, and italic is correct
                                                 {% endif %}

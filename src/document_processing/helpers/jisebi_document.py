@@ -31,6 +31,16 @@ class JISEBIDocument:
     def is_heading(self, paragraph):
         if (paragraph.style.name in ['JISEBI Heading 1', 'Heading 1', 'JISEBI Reference heading']):
             return True
+        
+        for section in ["Introduction","Literature Review","Method","Result","Discussion","Conclusion", "References"]:
+            if (
+                re.match(rf"^{section}", paragraph.text)
+                or re.match(rf"^{section}s\s*$", paragraph.text, re.IGNORECASE)
+                or re.match(rf'^{section}\s*$', paragraph.text, re.IGNORECASE)
+                or re.match(rf'^1\.\s*{section}\s*$', paragraph.text, re.IGNORECASE)
+            ):
+                return True
+            
         return False
 
     def is_subheading(self, paragraph):
@@ -363,9 +373,10 @@ class JISEBIDocument:
                 # 2. Starts with # or ## (markdown headers)
                 # 3. Starts with a number followed by a period (numbered section)
                 # 4. Capitalized words with 3 or fewer words that are not part of a normal sentence
-                if (self.is_heading(paragraph)):
-                    end = i-1
-                    break
+                if type(paragraph) == docx.text.paragraph.Paragraph:
+                    if (self.is_heading(paragraph)):
+                        end = i-1
+                        break
             
             # If we couldn't find the next section header, assume it goes to the end
             # (unlikely but a fallback)
@@ -375,7 +386,6 @@ class JISEBIDocument:
             # Extract the content between the start and end indices
             # content = [paragraph.text for paragraph in contents[start:end+1]]
             content = [paragraph.text if type(paragraph) == docx.text.paragraph.Paragraph else "TABLE" for paragraph in contents[start:end+1]]
-
 
             return {
                 "index": {
@@ -402,6 +412,8 @@ class JISEBIDocument:
             }
         
         except Exception as e:
+            print("TEST")
+            print(e)
             return {"index": -1, "message":f"Error extracting {section}: {e}"}
 
     def extract_references(self):

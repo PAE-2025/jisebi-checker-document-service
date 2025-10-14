@@ -60,68 +60,98 @@ class JISEBIReporting:
             print(f"Invalid text positions: start={start_index}, end={end_index}, text length={len(full_text)}")
             return False
             
-        # Get the text to highlight
-        text_to_highlight = full_text[start_index:end_index]
+        # # Get the text to highlight
+        # text_to_highlight = full_text[start_index:end_index]
         
-        # Create a new paragraph with the same style
-        new_paragraph = doc.add_paragraph()
-        new_paragraph.style = paragraph.style
+        # # Create a new paragraph with the same style
+        # new_paragraph = doc.add_paragraph()
+        # new_paragraph.style = paragraph.style
         
-        # Copy any paragraph formatting
-        new_paragraph.paragraph_format.alignment = paragraph.paragraph_format.alignment
-        new_paragraph.paragraph_format.left_indent = paragraph.paragraph_format.left_indent
-        new_paragraph.paragraph_format.right_indent = paragraph.paragraph_format.right_indent
-        new_paragraph.paragraph_format.first_line_indent = paragraph.paragraph_format.first_line_indent
-        new_paragraph.paragraph_format.line_spacing = paragraph.paragraph_format.line_spacing
-        new_paragraph.paragraph_format.space_before = paragraph.paragraph_format.space_before
-        new_paragraph.paragraph_format.space_after = paragraph.paragraph_format.space_after
+        # # Copy any paragraph formatting
+        # new_paragraph.paragraph_format.alignment = paragraph.paragraph_format.alignment
+        # new_paragraph.paragraph_format.left_indent = paragraph.paragraph_format.left_indent
+        # new_paragraph.paragraph_format.right_indent = paragraph.paragraph_format.right_indent
+        # new_paragraph.paragraph_format.first_line_indent = paragraph.paragraph_format.first_line_indent
+        # new_paragraph.paragraph_format.line_spacing = paragraph.paragraph_format.line_spacing
+        # new_paragraph.paragraph_format.space_before = paragraph.paragraph_format.space_before
+        # new_paragraph.paragraph_format.space_after = paragraph.paragraph_format.space_after
         
-        # Add text before the highlighted portion
-        if start_index > 0:
-            before_text = full_text[:start_index]
-            before_run = new_paragraph.add_run(before_text)
-            self.copy_run_formatting(paragraph, before_run)
+        # # Add text before the highlighted portion
+        # if start_index > 0:
+        #     before_text = full_text[:start_index]
+        #     before_run = new_paragraph.add_run(before_text)
+        #     self.copy_run_formatting(paragraph, before_run)
             
-        # Add the highlighted text
-        highlight_run = new_paragraph.add_run(text_to_highlight)
-        self.copy_run_formatting(paragraph, highlight_run)
-        highlight_run.font.highlight_color = highlight_color
+        # # Add the highlighted text
+        # highlight_run = new_paragraph.add_run(text_to_highlight)
+        # self.copy_run_formatting(paragraph, highlight_run)
+        # highlight_run.font.highlight_color = highlight_color
         
-        # Add text after the highlighted portion
-        if end_index < len(full_text):
-            after_text = full_text[end_index:]
-            after_run = new_paragraph.add_run(after_text)
-            self.copy_run_formatting(paragraph, after_run)
+        # # Add text after the highlighted portion
+        # if end_index < len(full_text):
+        #     after_text = full_text[end_index:]
+        #     after_run = new_paragraph.add_run(after_text)
+        #     self.copy_run_formatting(paragraph, after_run)
             
-        # Replace the original paragraph with our new one
-        # p_index = doc.paragraphs.index(paragraph)
-        p_element = paragraph._element
-        new_p_element = new_paragraph._element
+        # # Replace the original paragraph with our new one
+        # # p_index = doc.paragraphs.index(paragraph)
+        # p_element = paragraph._element
+        # new_p_element = new_paragraph._element
         
-        parent = p_element.getparent()
+        # parent = p_element.getparent()
 
-        if parent is None:
-            print("p_element has no parent. Attempting to locate or reattach...")
+        # if parent is None:
+        #     print("p_element has no parent. Attempting to locate or reattach...")
 
-            # Find the parent manually within the document tree
-            root = p_element.getroottree()
-            parent = root.getroot()
+        #     # Find the parent manually within the document tree
+        #     root = p_element.getroottree()
+        #     parent = root.getroot()
 
-            if parent is not None:
-                print("Reattached p_element to the tree.")
-                parent.append(p_element)  # Temporarily reattach it
-            else:
-                print("Could not find a suitable parent. Aborting operation.")
-                return
+        #     if parent is not None:
+        #         print("Reattached p_element to the tree.")
+        #         parent.append(p_element)  # Temporarily reattach it
+        #     else:
+        #         print("Could not find a suitable parent. Aborting operation.")
+        #         return
 
-        if parent is not None:
-            parent.replace(p_element, new_p_element)
-            # Remove the extra paragraph we created
-            self.remove_paragraph(doc.paragraphs[-1])
+        # if parent is not None:
+        #     parent.replace(p_element, new_p_element)
+        #     # Remove the extra paragraph we created
+        #     self.remove_paragraph(doc.paragraphs[-1])
 
-        else:
-            print("Could not find or reattach the parent. Skipping replacement.")
-        
+        # else:
+        #     print("Could not find or reattach the parent. Skipping replacement.")
+
+        # Track character positions
+        char_pos = 0
+        for run in paragraph.runs:
+            run_text_len = len(run.text)
+            run_start = char_pos
+            run_end = char_pos + run_text_len
+
+            # Check if this run overlaps with the highlight range
+            overlap_start = max(run_start, start_index)
+            overlap_end = min(run_end, end_index)
+
+            if overlap_start < overlap_end:
+                # If the run is fully within the highlight range, just highlight it
+                if run_start >= start_index and run_end <= end_index:
+                    run.font.highlight_color = highlight_color
+                else:
+                    # If only part of the run is in the range, split the run
+                    before = run.text[:overlap_start - run_start]
+                    highlight = run.text[overlap_start - run_start:overlap_end - run_start]
+                    after = run.text[overlap_end - run_start:]
+
+                    # Replace the run with three runs: before, highlight, after
+                    run.text = before
+                    highlight_run = paragraph.add_run(highlight)
+                    highlight_run.font.highlight_color = highlight_color
+                    self.copy_run_formatting(run, highlight_run)
+                    after_run = paragraph.add_run(after)
+                    self.copy_run_formatting(run, after_run)
+            char_pos += run_text_len
+
         return True
 
     def copy_run_formatting(self, source_paragraph, target_run):
@@ -224,7 +254,27 @@ class JISEBIReporting:
                 
                 if "heading" in data:
                     if data['heading'] != {}:
-                        pass
+                        for paragraph_index, issue in data["heading"].items():
+
+                            if "index" in getattr(document, key):
+                                obj_index = getattr(document, key)["index"]["first"] + int(paragraph_index)
+
+                            if "heading" in getattr(document, key):
+                                obj_index = getattr(document, key)["heading"]["index"]["first"] + int(paragraph_index)
+                            
+                            if issue["paragraph_issues"] != {}:
+                                paragraph_start = 0
+                                paragraph_end = len(self.jisebi_document.contents[obj_index].text)
+                                self.add_highlight(obj_index, paragraph_start, paragraph_end, WD_COLOR_INDEX.RED)
+
+                            if issue["run_issues"] != []:
+
+                                paragraph = self.jisebi_document.contents[obj_index]
+                                
+                                for run_issue in issue["run_issues"]:
+                                    run_index = run_issue["run_index"]
+                                    run = paragraph.runs[run_index]
+                                    run.font.highlight_color = WD_COLOR_INDEX.RED
 
                 if "body" in data:
                     if data["body"] != {}:
@@ -330,21 +380,29 @@ class JISEBIReporting:
             if "section_issue" in section_data:
                 if "not_found" in section_data["section_issue"] and section_data["section_issue"]["not_found"] and section_name != "literature_review":
                     section_issues["not_found"] = section_data["section_issue"]["not_found"]
-                    total_issues += len(section_data["section_issue"]["not_found"])
+                    # total_issues += len(section_data["section_issue"]["not_found"])
                 
                 if "sequence" in section_data["section_issue"] and section_data["section_issue"]["sequence"]:
                     section_issues["sequence"] = section_data["section_issue"]["sequence"]
-                    total_issues += len(section_data["section_issue"]["sequence"])
+                    # total_issues += len(section_data["section_issue"]["sequence"])
             
             # Check body issues (especially in references)
-            if "body" in section_data and isinstance(section_data["body"], dict):
+            if ("body" in section_data and isinstance(section_data["body"], dict)) or ("heading" in section_data and isinstance(section_data["heading"], dict)):
                 style_issues = 0
                 
-                for paragraph_id, paragraph_data in section_data["body"].items():
-                    if "paragraph_issues" in paragraph_data:
-                        if "style" in paragraph_data["paragraph_issues"]:
-                            style_issues += 1
-                            total_issues += 1
+                if "body" in section_data and isinstance(section_data["body"], dict):
+                    for paragraph_id, paragraph_data in section_data["body"].items():
+                        if "paragraph_issues" in paragraph_data:
+                            if "style" in paragraph_data["paragraph_issues"]:
+                                style_issues += 1
+                                # total_issues += 1
+                
+                if "heading" in section_data and isinstance(section_data["heading"], dict):
+                    for paragraph_id, paragraph_data in section_data["heading"].items():
+                        if "paragraph_issues" in paragraph_data:
+                            if "style" in paragraph_data["paragraph_issues"]:
+                                style_issues += 1
+                                # total_issues += 1
                 
                 if style_issues > 0:
                     section_issues["style_issues"] = style_issues
@@ -352,6 +410,7 @@ class JISEBIReporting:
             # Only include sections that have issues
             if section_issues["not_found"] or section_issues["sequence"] or section_issues["style_issues"]:
                 sections_with_issues.append(section_issues)
+                total_issues += 1
         
         # Calculate section order issues
         section_order_issues = []

@@ -469,6 +469,7 @@ class JISEBIEvaluation:
             return results
             
         else:
+            possible_caption = False
             for i, para in enumerate(paragraphs):
                 issues = []
                 paragraph_issues = {}
@@ -485,6 +486,11 @@ class JISEBIEvaluation:
                 #Check if content is a Table
                 if type(para) == docx.table.Table:
                     continue
+                
+                # Check for possible figure caption
+                if "Fig" in para.text or "Table" in para.text or "FIG" in para.text or "TABLE" in para.text:
+                    possible_caption = True
+                
 
                 if (para.text != "" and para.text != None):
                 
@@ -492,6 +498,25 @@ class JISEBIEvaluation:
                     run_issues = self.check_run_font(para.runs, font_name, font_size, bold, italic, style, paragraph_style=paragraph_style)
                     if run_issues and run_issues != {"message": "No issues in this part"}:
                         issues = run_issues
+
+                    if possible_caption == True:
+                        alternative_check = self.check_run_font(para.runs, font_name, 8, bold, italic, style, paragraph_style=paragraph_style)
+                        # Compare run_issues and alternative_check
+                        merged_issues = []
+                        for idx in range(max(len(run_issues), len(alternative_check))):
+                            issue = run_issues[idx] if idx < len(run_issues) else None
+                            alt_issue = alternative_check[idx] if idx < len(alternative_check) else None
+
+                            # If either has no issue, treat as no issue
+                            if (issue is None or not issue.get("issues")) and (alt_issue is None or not alt_issue.get("issues")):
+                                continue  # No issue in either
+                            elif (issue is None or not issue.get("issues")) or (alt_issue is None or not alt_issue.get("issues")):
+                                continue  # If either has no issue, treat as no issue
+                            else:
+                                # Both have issues, keep the issue
+                                merged_issues.append(issue)
+
+                        issues = merged_issues
 
                     # If there are issues with this paragraph, add to results
                     if (issues or paragraph_issues):
@@ -511,7 +536,8 @@ class JISEBIEvaluation:
                     bold: bool = None, 
                     italic: bool = None,
                     style: str = None,
-                    paragraph_style: str = None) -> Dict:
+                    paragraph_style: str = None,
+                    posssible_caption: bool = False) -> Dict:
         """
         Check if paragraphs meet specified font criteria.
         

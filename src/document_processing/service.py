@@ -75,7 +75,7 @@ class JISEBIProcessingService:
                 
                 pdf_report = await report.generate_final_report()
 
-                return pdf_report
+                return pdf_report, report.jisebi_report
             
             except Exception as e:
                 traceback.print_exc()

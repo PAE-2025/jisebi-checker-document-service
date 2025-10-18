@@ -31,8 +31,9 @@ async def processing_endpoint(
         result = await service.process_document(task_data.task_id)
         return {"message": "Document processed successfully", "task_id": task_data.task_id, "result": result}
     except Exception as e:
-        if retry_count + 1 == MAX_ATTEMPTS:
-            task.enqueue_task(task_data.task_id)
+        # disable re-queueing for now
+        # if retry_count + 1 == MAX_ATTEMPTS:
+            # task.enqueue_task(task_data.task_id)
 
         return JSONResponse(
             content= {

@@ -571,10 +571,11 @@ class JISEBIEvaluation:
             default_font_italic = False
         
         if paragraph_style != None and paragraph_style != 'None':
-            default_font_name = self.jisebi_document.raw_document.styles[paragraph_style].font.name
-            default_font_size = self.jisebi_document.raw_document.styles[paragraph_style].font.size.pt if self.jisebi_document.raw_document.styles[paragraph_style].font.size != None else None
-            default_font_bold = self.jisebi_document.raw_document.styles[paragraph_style].font.bold
-            default_font_italic = self.jisebi_document.raw_document.styles[paragraph_style].font.italic
+            if paragraph_style in self.jisebi_document.raw_document.styles:
+                default_font_name = self.jisebi_document.raw_document.styles[paragraph_style].font.name
+                default_font_size = self.jisebi_document.raw_document.styles[paragraph_style].font.size.pt if self.jisebi_document.raw_document.styles[paragraph_style].font.size != None else None
+                default_font_bold = self.jisebi_document.raw_document.styles[paragraph_style].font.bold
+                default_font_italic = self.jisebi_document.raw_document.styles[paragraph_style].font.italic
         
         if default_font_name == None:
             default_font_name = self.jisebi_document.default_font["name"]
